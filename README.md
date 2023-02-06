@@ -6,7 +6,7 @@
 ## 创建window
 就是正常的创建Window的流程。RegisterClassEx，CreateWindow。
 ## 创建设备对象
-首先要创建三个对象： a Device、an imediat context 和 a swap chain。其中 the imediate context是一个Direct3D11引入新的对象（相对旧版Direct3D)。
+首先要创建三个对象： a Device、an imediat context 和 a swap chain。其中 the imediate context是一个Direct3D11引入的新对象（相对旧版Direct3D)。
 
 在Direct3D10中，设备对象用于渲染和资源创建。而在Direct11中，the immediate context 用来渲染到buffer，而the device包含方法创建资源。
 
