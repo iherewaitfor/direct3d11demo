@@ -122,7 +122,7 @@ struct SimpleVertex
 };
 ```
 
-我们现在有一个结构表示顶点了。我们存储了顶点信息在我们的应用的系统内存里。但是，当我们传包含我们顶点的vertext buffer给GPU时，我们只是给了一块内存。GPU必须知道vertext layout，才能正常从buffer中解析出顶点的各个属性。给了解决这个问题，我们需要使用到 input layout.。在Direct3D11中，input layout是一个用描述顶点结构的Direct3D对象，以便GPU能理解。每一人上顶点属性使用[D3D11_INPUT_ELEMENT_DESC](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-d3d11_input_element_desc)描述。应用定义了一个D3D11_INPUT_ELEMENT_DESC数组来描述 顶点的input layout.
+我们现在有一个结构表示顶点了。我们存储了顶点信息在我们的应用的系统内存里。但是，当我们传包含我们顶点的vertext buffer给GPU时，我们只是给了一块内存。GPU必须知道vertext layout，才能正常从buffer中解析出顶点的各个属性。给了解决这个问题，我们需要使用到 input layout.。在Direct3D11中，input layout是一个用来描述顶点结构的Direct3D对象，以便GPU能理解。每一人上顶点属性使用[D3D11_INPUT_ELEMENT_DESC](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-d3d11_input_element_desc)描述。应用定义了一个D3D11_INPUT_ELEMENT_DESC数组来描述 顶点的input layout.
 本例中，因为我们的顶点的属性只有一个，所以我们input layout的描述数组，只有一个元素。
 ```C++
 // Define the input layout
