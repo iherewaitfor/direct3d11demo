@@ -18,6 +18,10 @@ The swap chain则用于获取渲染的buffer，以及将内容显示到屏幕上
 - SampleDesc：用于启用多重采样。由于本例没有使用多重采样。SampleDesc的count设置成了1，Quality设置成了0，从而禁用了多重采样。
 
 ```C++
+    ID3D11Device*           g_pd3dDevice = NULL;
+    ID3D11DeviceContext*    g_pImmediateContext = NULL;
+    IDXGISwapChain*         g_pSwapChain = NULL;
+
     DXGI_SWAP_CHAIN_DESC sd;
     ZeroMemory( &sd, sizeof(sd) );
     sd.BufferCount = 1;
