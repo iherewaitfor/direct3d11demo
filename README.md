@@ -112,7 +112,7 @@ The last thing we need to set up before Direct3D 11 can render is initialize the
 ## Elements of a Triangle
 三个顶点定义了一个三角形。我们怎么把三个顶点传给GPU呢?在Direct3D11中，顶点信息（比如位置信息）存储在buffer资源里的。存储顶点的buffer叫vertext buffer。所以我们必须创建一个足够大的vertext buffer存储这三个顶点的信息，并且填充顶点位置信息。在Direct3D11中，在创建buffer资源时，应用必须指明buffer的大小是多少字节。我们知道三个顶点就够了，但每个顶点的需要多少个字节呢？为了回答这个问题，我们就需要理解 vertex layout了。（顶点布局）
 ## Input Layout  D3D11_INPUT_ELEMENT_DESC
-顶点有位置信息。通常顶点同时还有其他信息，比如法线，一个或多个颜色，纹理坐标等等。Vertext layout定义了这些属性在内存的布局：属性的数据类型，个数，这些属性在内存中的顺序等。顶点通常使用一个结构表示。顶点的大小可以很方便地使用结构建的大小表示。
+顶点有位置信息。通常顶点同时还有其他信息，比如法线，一个或多个颜色，纹理坐标等等。Vertext layout定义了这些属性在内存的布局：属性的数据类型，个数，这些属性在内存中的顺序等。顶点通常使用一个结构表示。顶点的大小可以很方便地使用结构的大小表示。
 本例我们只使用到了位置信息。使用了XMFLOAT3类型。这个类型表示一个有3个点的vector.
 
 ```C++
