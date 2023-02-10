@@ -191,3 +191,33 @@ g_pImmediateContext->VSSetShader( g_pVertexShader, NULL, 0 );
 g_pImmediateContext->PSSetShader( g_pPixelShader, NULL, 0 );
 g_pImmediateContext->Draw( 3, 0 );
 ```
+# Tutorial 03 Shaders
+本例将单独解释什么是shader，以及它们是怎么工作的。为了理解各个shader，我们将了解整个图形管线。如下图：
+
+![image Direct11图形管线](../direct3d11demo/images/d3d11-pipeline-stages.jpg)
+
+在教育2中，我们调用 了VSSetShader()和PSSetShader()，实际上是将shader绑定到管线对应阶段。然后当我们调用 了Draw之后，我们开始处理已经传到图形管线上的顶点数据。下面的部分将详细描述 Draw之后发生的事情。
+
+## Shaders
+在Direct3D11中，各个shader位于图形管线的不同阶段。它们是由GPU执行的很短的程序。取特定的输入数据，处理这些数据，然后输出结果给到管线的下一阶段使用。Direct3D11支持3种基本的shader: vertex shader， geometry shader和pixel shader。
+- vertext shader： 以vertex为输入。由vertex buffer输入给GPU的顶点，都会跑一次这个程序。
+- geometry shader: 以基元作为 输入。传给GPU的基元都会跑一次。基元可能是一个点，线或者三角形
+- pixel shader: 以像素（也叫fragment)作为输入。我们将渲染的基元的每个像素都会跑一次。
+
+vertex， geometry, 和pixel shader就是各个动作发生的核心。当我们使用Direct3D11渲染时，GPU必须要有合适的vertex shader(顶点着色器)和pixel shader。Geometry shder是Direct3D11的高级特性，是可选的。本教程不做讨论。
+
+## Vertex Shaders（顶点着色器）
+Vertex shader是由GPU针对顶点运行的短程序。可以把vertex shader比作这样的C函数：以vertext作为输入，处理这输入，然后输出修改过的顶点。在应用以vertex buffer的方式传顶点数据给GPU后，GPU遍历在vertext buffer的所有顶点，并且对每个顶点执行激动的vertex shader。传顶点数据给vertext shader作为入参。
+vertext shader可以用来执行多种任务。vertext shader最生分的工作就是转换。转换是将向量从一个坐标系统转换到另一个的过程。比如，在3D场景的一个3角形，顶点是(0,0,0)(1,0,0)(0,1,0)。当这个三角被画到2D的texture buffer时，GPU必须知道这些顶点将要画到的vertex buffer中对应的点的2D坐标。转换帮助我们完成此类任务。转换会在下一教程中讨论。在本教育中，我们会使用一人上简单的 vertext shader。它除了将输入作为输出 ，什么都不做。
+High-Level Shading Language（HLSL)
+
+```C++
+    float4 VS( float4 Pos : POSITION ) : SV_POSITION
+    {
+        return Pos;
+    }
+```
+这个vertext shader看似C函数。HLSL用类C语法，以便让C/C++程序员更易学习。这个vertex shader，名叫VS，以float4类型为入参，输出一个float4值。在HLSL中，一个float4是一个包含4个元素的向量，每个元素都是一个浮点型数字。两个冒号分别定义了入参的语义 和返回值的语义。如上所述，HLSL中的语义描述了数据的性质。在我们上面的shader中，我们选择了POSITiON作为入参位置的语义，是因为这个参数必须包含顶点的位置。返回值的语义SV_POSITION是一个有特定含义的预定义的语义。这个语音告诉图形管线，和这个语义关联的数据定义了clip-space位置。GPU需要此位置才能在屏幕上绘制像素。（我们将在下一教程讨论clip-space）。在我们的shader中，我们输入位置 数据，并输入同样的数据到管线上。
+
+## Pixel Shaders（像素着色器）
+
