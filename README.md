@@ -194,7 +194,7 @@ g_pImmediateContext->Draw( 3, 0 );
 # Tutorial 03 Shaders
 本例将单独解释什么是shader，以及它们是怎么工作的。为了理解各个shader，我们将了解整个图形管线。如下图：
 
-![image Direct11图形管线](../direct3d11demo/images/d3d11-pipeline-stages.jpg)
+![image Direct11图形管线](./images/d3d11-pipeline-stages.jpg)
 
 在教育2中，我们调用 了VSSetShader()和PSSetShader()，实际上是将shader绑定到管线对应阶段。然后当我们调用 了Draw之后，我们开始处理已经传到图形管线上的顶点数据。下面的部分将详细描述 Draw之后发生的事情。
 
