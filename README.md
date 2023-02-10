@@ -196,7 +196,7 @@ g_pImmediateContext->Draw( 3, 0 );
 
 ![image Direct11图形管线](./images/d3d11-pipeline-stages.jpg)
 
-在教育2中，我们调用 了VSSetShader()和PSSetShader()，实际上是将shader绑定到管线对应阶段。然后当我们调用 了Draw之后，我们开始处理已经传到图形管线上的顶点数据。下面的部分将详细描述 Draw之后发生的事情。
+在教程2中，我们调用 了VSSetShader()和PSSetShader()，实际上是将shader绑定到管线对应阶段。然后当我们调用 了Draw之后，我们开始处理已经传到图形管线上的顶点数据。下面的部分将详细描述 Draw之后发生的事情。
 
 ## Shaders
 在Direct3D11中，各个shader位于图形管线的不同阶段。它们是由GPU执行的很短的程序。取特定的输入数据，处理这些数据，然后输出结果给到管线的下一阶段使用。Direct3D11支持3种基本的shader: vertex shader， geometry shader和pixel shader。
@@ -208,7 +208,7 @@ vertex， geometry, 和pixel shader就是各个动作发生的核心。当我们
 
 ## Vertex Shaders（顶点着色器）
 Vertex shader是由GPU针对顶点运行的短程序。可以把vertex shader比作这样的C函数：以vertext作为输入，处理这输入，然后输出修改过的顶点。在应用以vertex buffer的方式传顶点数据给GPU后，GPU遍历在vertext buffer的所有顶点，并且对每个顶点执行激动的vertex shader。传顶点数据给vertext shader作为入参。
-vertext shader可以用来执行多种任务。vertext shader最生分的工作就是转换。转换是将向量从一个坐标系统转换到另一个的过程。比如，在3D场景的一个3角形，顶点是(0,0,0)(1,0,0)(0,1,0)。当这个三角被画到2D的texture buffer时，GPU必须知道这些顶点将要画到的vertex buffer中对应的点的2D坐标。转换帮助我们完成此类任务。转换会在下一教程中讨论。在本教育中，我们会使用一人上简单的 vertext shader。它除了将输入作为输出 ，什么都不做。
+vertext shader可以用来执行多种任务。vertext shader最生分的工作就是转换。转换是将向量从一个坐标系统转换到另一个的过程。比如，在3D场景的一个3角形，顶点是(0,0,0)(1,0,0)(0,1,0)。当这个三角被画到2D的texture buffer时，GPU必须知道这些顶点将要画到的vertex buffer中对应的点的2D坐标。转换帮助我们完成此类任务。转换会在下一教程中讨论。在本教程中，我们会使用一人上简单的 vertext shader。它除了将输入作为输出 ，什么都不做。
 High-Level Shading Language（HLSL)
 
 ```C++
