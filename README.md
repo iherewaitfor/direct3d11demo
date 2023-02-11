@@ -220,4 +220,37 @@ High-Level Shading Language（HLSL)
 这个vertext shader看似C函数。HLSL用类C语法，以便让C/C++程序员更易学习。这个vertex shader，名叫VS，以float4类型为入参，输出一个float4值。在HLSL中，一个float4是一个包含4个元素的向量，每个元素都是一个浮点型数字。两个冒号分别定义了入参的语义 和返回值的语义。如上所述，HLSL中的语义描述了数据的性质。在我们上面的shader中，我们选择了POSITiON作为入参位置的语义，是因为这个参数必须包含顶点的位置。返回值的语义SV_POSITION是一个有特定含义的预定义的语义。这个语音告诉图形管线，和这个语义关联的数据定义了clip-space位置。GPU需要此位置才能在屏幕上绘制像素。（我们将在下一教程讨论clip-space）。在我们的shader中，我们输入位置 数据，并输入同样的数据到管线上。
 
 ## Pixel Shaders（像素着色器）
+现代计算机显示器通常是光栅显示器。这意味着显示屏实际上是由一个个叫像素点组件 二维网格。每个像素包含一个独立的颜色。当我们在显示屏上渲染一个三角形时，我们实际上并不是作为一个整体渲染这个三角开，而是我们点亮了这个三角形覆盖一区域中的这些像素点。如下图所示。右边为实际情况。
+
+![image 光栅化 ](./images/Tutorial03_Figure2_Rasterization.png)
+
+将三个顶点定义的三角形转换成被这个三角形覆盖的一组像素的过程，叫做光栅化。GPU首先要确定哪些像素点是正在被渲染的三角形所覆盖。然后它调用 激活的pixel shader去处理每一个被覆盖的像素。pixel shader主要的作用是去计算每一个pixel的颜色。pixel shader接受特定的关于这个像素将怎样着色的输入，计算这个像素的颜色，然后输出颜色到管线 上。这个输入来自激活的geometry sahder。或者如果geometry sahder不存在的话，如本教程这样，输出直接来自vertex shader。
+
+我们之前的创建的vertext shader 输出 了一个语义是SV_POSITION的float4。这个将是我们pixel shader的输入。因为pixel shader输出 颜色值，我们pixel shader的输出将是float4。我们为输出提供语义SV_TARGET，以表示输出到渲染目标。
+```C++
+    float4 PS( float4 Pos : SV_POSITION ) : SV_Target
+    {
+        return float4( 1.0f, 1.0f, 0.0f, 1.0f );    // Yellow, with Alpha = 1
+    }
+
+```
+
+## 创建shaders 
+D3DX11CompileFromFile
+
+```c++
+    // Create the vertex shader
+    if( FAILED( D3DX11CompileFromFile( "Tutorial03.fx", NULL, NULL, "VS", "vs_4_0", D3DCOMPILE_ENABLE_STRICTNESS, NULL, NULL, &pVSBlob, &pErrorBlob, NULL ) ) )
+        return FALSE;
+
+    // Create the pixel shader
+    if( FAILED( D3DX11CompileFromFile( "Tutorial03.fx", NULL, NULL, "PS", "ps_4_0", D3DCOMPILE_ENABLE_STRICTNESS, NULL, NULL, &pPSBlob, &pErrorBlob, NULL ) ) )
+        return FALSE;
+
+```
+
+在我们过一遍图形管线后，我们开始理解渲染一个三角开的过程了。关键两步。
+1. 在顶点数据中创建资源数据
+2. 创建各个shader：转换这些数据进行渲染。
+
 
