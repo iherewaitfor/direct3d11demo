@@ -9,7 +9,7 @@
 ```
 cmake .. -G "Visual Studio 17 2022" -A Win32
 ```
-。然后打开生成的sln文件，将Demo项目设置为启动项即可。
+。然后打开生成的sln文件，将Demo项目设置为启动项即可。 cmake使用可参考本github项目[cmakevisualstudio](https://github.com/iherewaitfor/cmakevisualstudio)
 
 ```bat
 D:\srccode\direct3d11demo\Tutorial 01Basics\build>cmake .. -G "Visual Studio 17 2022" -A Win32
