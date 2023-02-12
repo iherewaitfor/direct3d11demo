@@ -3,6 +3,67 @@
 #   Tutorial 1: Direct3D 11 Basics
 本示例展示创建一个最小的Direct3D11应用的必要步骤。创建窗口、创建设备对象、显示一个颜色到窗口上。
 代码位置[Tutorial 01Basics](https://github.com/iherewaitfor/direct3d11demo/tree/main/Tutorial%2001Basics).
+
+## How to run
+先安装cmake，进入源码目录新建build目录。然后在build 目录中进入命令行。然后执行命令
+```
+cmake .. -G "Visual Studio 17 2022" -A Win32
+```
+。然后打开生成的sln文件，将Demo项目设置为启动项即可。
+
+```bat
+D:\srccode\direct3d11demo\Tutorial 01Basics\build>cmake .. -G "Visual Studio 17 2022" -A Win32
+CMake Deprecation Warning at CMakeLists.txt:2 (cmake_minimum_required):
+  Compatibility with CMake < 2.8.12 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+-- Selecting Windows SDK version 10.0.22621.0 to target Windows 10.0.19045.
+-- The C compiler identification is MSVC 19.33.31630.0
+-- The CXX compiler identification is MSVC 19.33.31630.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.33.31629/bin/Hostx64/x86/cl.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.33.31629/bin/Hostx64/x86/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: D:/srccode/direct3d11demo/Tutorial 01Basics/build
+
+D:\srccode\direct3d11demo\Tutorial 01Basics\build>
+```
+或者根据你自己电脑安装的不同版本修改对应命令。可参考如下。项目中使用"Visual Studio 17 2022"
+```
+D:\srccode\direct3d11demo\Tutorial05Transformation\build>cmake -G help
+CMake Error: Could not create named generator help
+
+Generators
+* Visual Studio 17 2022        = Generates Visual Studio 2022 project files.
+                                 Use -A option to specify architecture.
+  Visual Studio 16 2019        = Generates Visual Studio 2019 project files.
+                                 Use -A option to specify architecture.
+  Visual Studio 15 2017 [arch] = Generates Visual Studio 2017 project files.
+                                 Optional [arch] can be "Win64" or "ARM".
+  Visual Studio 14 2015 [arch] = Generates Visual Studio 2015 project files.
+                                 Optional [arch] can be "Win64" or "ARM".
+  Visual Studio 12 2013 [arch] = Generates Visual Studio 2013 project files.
+                                 Optional [arch] can be "Win64" or "ARM".
+  Visual Studio 11 2012 [arch] = Deprecated.  Generates Visual Studio 2012
+                                 project files.  Optional [arch] can be
+                                 "Win64" or "ARM".
+  Visual Studio 9 2008 [arch]  = Generates Visual Studio 2008 project files.
+                                 Optional [arch] can be "Win64" or "IA64".
+```
+
+
 ## 创建window
 就是正常的创建Window的流程。RegisterClassEx，CreateWindow。
 ## 创建设备对象[D3D11CreateDeviceAndSwapChain](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-d3d11createdeviceandswapchain)
