@@ -462,3 +462,40 @@ index buffer（索引缓冲区）的创建非常类似于vertext buffer（顶点
     // Set index buffer
     g_pImmediateContext->IASetIndexBuffer( g_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0 );
 ```
+
+## Modifying the Vertex Shader修改顶点着色器
+上一教程中的vertex shader，其中是取输入顶点的位置 信息，不做任何修改输出同样的位置信息。我们可以这样做是因为输入顶点位置已经在投影空间中定义。现在因为输入顶点位置 是在对象空间中定义，在从vertext shader输出之前，我们必须变换它。我们通过三个步骤完成：从对象空间变换到世界空间，从世界空间变换到视图空间，从视图空间变换到投影空间（即  对象-->世界-->投影）。我们要做的每一件事是场景3个constan buffer变量，后续可以在渲染时能在shader中读些它们。在FX文件里，声明constant buffer变量，有点像声明一个C++ struct全局变量。我们将要用的这三个变量分别是类型为HLSL "matrix"的世界、视力、投影变换矩阵。
+
+一时我们声明了所需的矩阵，我们就更新我们的vertex shader 通过使用这些矩阵变换输入位置。通过将向量乘以矩阵来变换向量。在HLSL，这是通过使用nul()内置函数来完成的。我们的变量声明和新的vertex shader如下所示：
+```C++
+//--------------------------------------------------------------------------------------
+// Constant Buffer Variables
+//--------------------------------------------------------------------------------------
+cbuffer ConstantBuffer : register( b0 )
+{
+	matrix World;
+	matrix View;
+	matrix Projection;
+}
+
+//--------------------------------------------------------------------------------------
+struct VS_OUTPUT
+{
+    float4 Pos : SV_POSITION;
+    float4 Color : COLOR0;
+};
+
+//--------------------------------------------------------------------------------------
+// Vertex Shader
+//--------------------------------------------------------------------------------------
+VS_OUTPUT VS( float4 Pos : POSITION, float4 Color : COLOR )
+{
+    VS_OUTPUT output = (VS_OUTPUT)0;
+    output.Pos = mul( Pos, World );
+    output.Pos = mul( output.Pos, View );
+    output.Pos = mul( output.Pos, Projection );
+    output.Color = Color;
+    return output;
+}
+```
+在这个vertex shader中，每个nul()，每个mul（）对输入位置应用一个变换。世界、视图、投影变换按顺序应用。这是必要的，因为向量和矩阵乘法是不可交换的。
