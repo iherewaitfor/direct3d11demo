@@ -499,3 +499,38 @@ VS_OUTPUT VS( float4 Pos : POSITION, float4 Color : COLOR )
 }
 ```
 在这个vertex shader中，每个nul()，每个mul（）对输入位置应用一个变换。世界、视图、投影变换按顺序应用。这是必要的，因为向量和矩阵乘法是不可交换的。
+
+## Setting up the Matrices
+我们已经使用矩阵更新vertex shader变换，但我们也需要在我们程序中定义这3个矩阵。这三个矩阵将存储渲染时要使用的变换。在渲染前，我们复制这些矩阵的值到shader的constant buffer中。然后当我们通过调用Draw()初始化渲染时，我们的vertex shader从读取存储在constant buffer中的矩阵。除了矩阵之外，我们还需要一个表示constant buffer(常量缓冲区)的ID3D11Buffer对象。因为，我们会额外需要以下全局变量：
+```C++
+    ID3D11Buffer* g_pConstantBuffer = NULL;
+    XMMATRIX g_World;
+    XMMATRIX g_View;
+    XMMATRIX g_Projection;
+```
+为了创建ID3D11Buffer对象，我们使用ID3D11Device::CreateBuffer()并且指定D3D11_BIND_CONSTANT_BUFFER。
+```C++
+    D3D11_BUFFER_DESC bd;
+    ZeroMemory( &bd, sizeof(bd) );
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(ConstantBuffer);
+    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bd.CPUAccessFlags = 0;
+    if( FAILED(g_pd3dDevice->CreateBuffer( &bd, NULL, &g_pConstantBuffer ) ) )
+        return hr;
+```
+下一步我们需要做的是提出三个矩阵，我们将使用它们来进行变换。我们希望三角形位于原点，平行于XY平面。这正是它在对象空间的顶点缓冲区中的存储方式。因此世界变换不需要做任何事情，我们初始为世界矩阵为单位矩阵。我们要设置我们的相机到[0,1,-5],看向点[0,1,0]。我们可以调用XMMatrixLookAtLH()使用向上向量(0,1,0)方便地计算视图矩阵，因为我们希望+Y方向 始终保持在顶部。最后，为了得到一个投影矩阵，我们调用XMMatrixPerspectiveFovLH()，它具有90度垂直视野（pi/2)，横纵比为640/480（这是我们的back buffer的大小），近Z和远Z分别为0.01和100.0。这意味着任何近过0.01或夫妻远过100的事件在屏幕上都不可见。这三个矩阵被存储在全局变量g_World, g_View, and g_Projection。
+
+## 更新Constant Buffers
+我们有矩阵，现在我们必须在渲染时将它们写到constan buffer中，以便GPU可以读取它们。为了更新缓冲区，我们可以使用ID3D11DeviceContext::UpdateSubresource()  API并向其传一个指针，该指针指向与vertex shader的contantbuffer中相同顺序存储的几个矩阵。为了帮助实现这一点，我们将创建一个与着色器中的常量缓冲区具有相同布局的structure。此外，由于在C++和HLSL中，矩阵在内存中的排列方式不同，因此我们必须在更新矩阵之前对其进行转置。(通过XMMatrixTranspose进行转置。)
+```C++
+    //
+    // Update variables
+    //
+    ConstantBuffer cb;
+    cb.mWorld = XMMatrixTranspose( g_World );
+    cb.mView = XMMatrixTranspose( g_View );
+    cb.mProjection = XMMatrixTranspose( g_Projection );
+    g_pImmediateContext->UpdateSubresource( g_pConstantBuffer, 0, NULL, &cb, 0, 0 );
+
+```
