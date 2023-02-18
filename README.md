@@ -588,3 +588,69 @@ VS_OUTPUT VS( float4 Pos : POSITION, float4 Color : COLOR )
 ## 多个变换
 要对一个向量应用多个变换，我们可以简单地将向量乘以第一个变换矩阵，然后将得到的向量乘以每二个变换矩阵，以此类推。因为向量和矩阵相乘是关联的，我们可以先将所有矩阵相乘，然后将向量乘以乘积矩阵，会得到相同的结果。下图显示了如果我们将旋转和平移变换结合在一起，立方体最终结果会是怎样：
 ![image 多个变换](images/T05MultipleTransformations.png)
+
+## 创建轨道
+在本教程，我们将变换两个立方体。每一个将在原地旋转，而第二个将围绕第一个旋转，同时绕其自身旋转。这两个立方体将有自己的世界变换矩阵与其关联，并且该矩阵将在渲染的每一帧中重新被应用。
+
+XNA Math中有一些函数可以帮助创建旋转、平移和缩放矩阵。
+
+- 旋转。围绕X、Z和Z轴旋转，可以通过 这些函数完成XMMatrixRotationX, XMMatrixRotationY和XMMatrixRotationZ。它们创建了围绕一个主轴旋转的基础旋转矩阵。围其他轴的复杂旋转可以通过多个基础旋转矩阵相乘来完成。
+- 平移。平移可以通过调用XMMatrixTranslation函数来完成。这个函数会创建一个平移矩阵。
+- 缩放。缩放通过XMMatrixScaling完成。它只沿着主轴缩放。如果希望沿任意轴缩放，则可以将缩放矩阵与适应的旋转矩阵相乘，以实现该效果。
+
+第一个立方体将在原地旋转，并作为轨道的中民。该 立方体沿Y轴旋转，该旋转与世界矩阵关联。这是通过调用XMMatrixRoationY函数实现的，如下代码所示。该立方体每帧旋转一个设定的量。由于假设立方体持续旋转，旋转矩阵所基于的值会随着每一帧而递增。
+
+```C++
+    // 1st Cube: Rotate around the origin
+    g_World1 = XMMatrixRotationY( t );
+```
+每二个立方体会围绕第一个旋转。为了演示多个变换，将添加缩放因子 及其自的轴旋转。所使用的公式显示在代码的正下方（注释中）。首先，该立方体会被缩小到30%，然后它沿其旋转轴（本例中为Z轴）。为了模拟轨道，它将从原点平移，然后沿Y轴旋转。通过四个单独矩阵及其各自的变换(mScale,mSpin,mTranslate,mOrbit)，然后将其相乘，可以获得所需效果。
+```
+    // 2nd Cube:  Rotate around origin
+    XMMATRIX mSpin = XMMatrixRotationZ( -t );
+    XMMATRIX mOrbit = XMMatrixRotationY( -t * 2.0f );
+    XMMATRIX mTranslate = XMMatrixTranslation( -4.0f, 0.0f, 0.0f );
+    XMMATRIX mScale = XMMatrixScaling( 0.3f, 0.3f, 0.3f );
+    g_World2 = mScale * mSpin * mTranslate * mOrbit;
+```
+需要注意的一点是，这些运算是不可交换的。变换的应用顺序很重要。实验变换的顺序并观察结果。
+
+由于 所有变换函数都将根据参数创建一个新的矩阵，因此它们的旋转量必须递增。这是通过更新“时间”变量来完成的。
+```C++
+    // Update our time
+    t += XM_PI * 0.0125f;
+```
+在进行渲染调用之前，必须更新着色器的常量缓冲区。请注意，世界矩阵对于每个立方体都是唯一的，因此，传递给它的每个对象都会发生变化。
+
+```C++
+    //
+    // Update variables for the first cube
+    //
+    ConstantBuffer cb1;
+    cb1.mWorld = XMMatrixTranspose( g_World1 );
+    cb1.mView = XMMatrixTranspose( g_View );
+    cb1.mProjection = XMMatrixTranspose( g_Projection );
+    g_pImmediateContext->UpdateSubresource( g_pConstantBuffer, 0, NULL, &cb1, 0, 0 );
+
+    //
+    // Render the first cube
+    //
+    g_pImmediateContext->VSSetShader( g_pVertexShader, NULL, 0 );
+    g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pConstantBuffer );
+    g_pImmediateContext->PSSetShader( g_pPixelShader, NULL, 0 );
+    g_pImmediateContext->DrawIndexed( 36, 0, 0 );
+
+    //
+    // Update variables for the second cube
+    //
+    ConstantBuffer cb2;
+    cb2.mWorld = XMMatrixTranspose( g_World2 );
+    cb2.mView = XMMatrixTranspose( g_View );
+    cb2.mProjection = XMMatrixTranspose( g_Projection );
+    g_pImmediateContext->UpdateSubresource( g_pConstantBuffer, 0, NULL, &cb2, 0, 0 );
+
+    //
+    // Render the second cube
+    //
+    g_pImmediateContext->DrawIndexed( 36, 0, 0 );
+```
