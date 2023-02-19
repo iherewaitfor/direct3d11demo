@@ -654,3 +654,49 @@ XNA Math中有一些函数可以帮助创建旋转、平移和缩放矩阵。
     //
     g_pImmediateContext->DrawIndexed( 36, 0, 0 );
 ```
+
+## the Depth Buffer深度缓冲区
+本教程另一个很重要的补充就是深度缓冲区。如果没有它，更小的那个立方体在去到更大的背面时，仍然会被画在更大的中间立方体的前面。深度缓冲区让Deirect3D可以跟踪很个被画到屏幕的像素的深度。Direct3D11的深度缓冲区的默认行为是对照存储在该 屏幕空间像素的深度缓冲区中的值检查绘制到屏幕的每个像素。如果正在渲染的像素的深度小于或者等于深度缓冲区中已经存在的值，则绘制该像素，并将深度缓冲区中的值更新为新绘制像素的深度。相反，如果待绘制的像素的深度比缓冲区中的深度值更大，该像素被忽略，并且深度缓冲区中的值保持不变。
+
+下面的示例中的代码创建了一个深度缓冲区（DepthStencil texture)。它也创建了一个深度缓冲区对应的DepthStencilView，以便让Deirect3D11知道用它作为Depth Stencil texture。
+
+```C++
+    // Create depth stencil texture
+    D3D11_TEXTURE2D_DESC descDepth;
+    ZeroMemory( &descDepth, sizeof(descDepth) );
+    descDepth.Width = width;
+    descDepth.Height = height;
+    descDepth.MipLevels = 1;
+    descDepth.ArraySize = 1;
+    descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    descDepth.SampleDesc.Count = 1;
+    descDepth.SampleDesc.Quality = 0;
+    descDepth.Usage = D3D11_USAGE_DEFAULT;
+    descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    descDepth.CPUAccessFlags = 0;
+    descDepth.MiscFlags = 0;
+    hr = g_pd3dDevice->CreateTexture2D( &descDepth, NULL, &g_pDepthStencil );
+    if( FAILED(hr) )
+        return hr;
+
+    // Create the depth stencil view
+    D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
+    ZeroMemory( &descDSV, sizeof(descDSV) );
+    descDSV.Format = descDepth.Format;
+    descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    descDSV.Texture2D.MipSlice = 0;
+    hr = g_pd3dDevice->CreateDepthStencilView( g_pDepthStencil, &descDSV, &g_pDepthStencilView );
+    if( FAILED(hr) )
+        return hr;
+```
+为了用这个新创建的depth stencil buffer，本程序必须将其绑定到设备。这是通过把该depth sencil view会给OMSetRendertargets函数的每三个参数来完成的。
+```C++
+    g_pImmediateContext->OMSetRenderTargets( 1, &g_pRenderTargetView, g_pDepthStencilView );
+```
+与渲染目标一样，我们也必须在渲染之前 清除深度缓冲区。这确保了前一帧 的深度值不会错误地丢弃当前帧中的像素。在下面的代码中，教程实际上将深度缓冲区设置为最大值(1.0)。
+```C++
+    //
+    // Clear the depth buffer to 1.0 (max depth)
+    //
+    g_pImmediateContext->ClearDepthStencilView( g_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 );
+```
