@@ -534,7 +534,7 @@ VS_OUTPUT VS( float4 Pos : POSITION, float4 Color : COLOR )
     g_pImmediateContext->UpdateSubresource( g_pConstantBuffer, 0, NULL, &cb, 0, 0 );
 ```
 
-# 3D变换
+#Tutorial05 3D变换
 在上一教程，我们渲染了一个立方体从模型空间到屏幕。在本教程，我们将扩展变换的概念，并展示一个能完成这些变换的简单动画。
 
 这个教程的输出是一个对象绕着另一个对象转。这有助于演示变换以及他们是怎样组合去实现所需的效果。随着我们引入新概念，未来的教程将在此基础上构建。
