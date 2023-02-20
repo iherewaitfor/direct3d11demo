@@ -314,7 +314,7 @@ D3DX11CompileFromFile
 1. 在顶点数据中创建资源数据
 2. 创建各个shader：转换这些数据进行渲染。
 
-# Tutorial04 3Dspaces
+# Tutorial04 3DSpaces
 在本教程，我们将深入研究3D位置和转换的细节。 本教程的输出结果是一个被渲染到屏幕的3D对象。
 ## 3D Spaces(3维空间)
 
