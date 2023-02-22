@@ -7,6 +7,7 @@ project (Demo)
 # 查找目录下的所有源文件
 # 并将名称保存到DIR_SRCS变量
 aux_source_directory(. DIR_SRCS)
+list(APPEND DIR_SRCS ${PROJECT_SOURCE_DIR}/Tutorial03.rc)
 #aux_source_directory(${PROJECT_SOURCE_DIR}/../include direct3dinclude)
 include_directories(../include)
 
