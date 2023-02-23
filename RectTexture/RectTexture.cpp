@@ -12,6 +12,7 @@
 #include <xnamath.h>
 #include "resource.h"
 
+#include <d3dx10math.h>
 
 //--------------------------------------------------------------------------------------
 // Structures
@@ -451,7 +452,9 @@ HRESULT InitDevice()
     g_pImmediateContext->UpdateSubresource( g_pCBNeverChanges, 0, NULL, &cbNeverChanges, 0, 0 );
 
     // Initialize the projection matrix
-    g_Projection = XMMatrixPerspectiveFovLH( XM_PIDIV4/2, width / (FLOAT)height, 0.01f, 100.0f );
+    //g_Projection = XMMatrixPerspectiveFovLH( XM_PIDIV4/2, width / (FLOAT)height, 0.01f, 100.0f );
+    // 创建正交投影矩阵，主要用来实施2D渲染.
+    g_Projection = XMMatrixOrthographicLH((float)2, (float)2, 0.1f, 100.0f);
     
     CBChangeOnResize cbChangesOnResize;
     cbChangesOnResize.mProjection = XMMatrixTranspose( g_Projection );
