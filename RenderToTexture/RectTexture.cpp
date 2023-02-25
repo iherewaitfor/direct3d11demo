@@ -38,7 +38,6 @@ struct CBChangeOnResize
 struct CBChangesEveryFrame
 {
     XMMATRIX mWorld;
-    XMFLOAT4 vMeshColor;
 };
 
 
@@ -527,17 +526,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 
 void RenderToTexture()
 { //渲染到纹理
-    static float t = 0.0f;
-    // Rotate cube around the origin
-    g_World = XMMatrixRotationY(0.0f);
-
-    // Modify the color
-    g_vMeshColor.x = (sinf(t * 1.0f) + 1.0f) * 0.5f;
-    g_vMeshColor.y = (cosf(t * 3.0f) + 1.0f) * 0.5f;
-    g_vMeshColor.z = (sinf(t * 5.0f) + 1.0f) * 0.5f;
-
-
-
+    g_World = XMMatrixIdentity();
 
     // 设置渲染目标视图到纹理上.
     g_renderTextureClass.SetRenderTarget(g_pImmediateContext, g_pDepthStencilView);
@@ -551,7 +540,6 @@ void RenderToTexture()
     //
     CBChangesEveryFrame cb;
     cb.mWorld = XMMatrixTranspose(g_World);
-    cb.vMeshColor = g_vMeshColor;
     g_pImmediateContext->UpdateSubresource(g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0);
 
     //
@@ -563,14 +551,14 @@ void RenderToTexture()
     g_pImmediateContext->VSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
     g_pImmediateContext->PSSetShader(g_pPixelShader, NULL, 0);
     g_pImmediateContext->PSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
-    g_pImmediateContext->PSSetShaderResources(0, 1, &g_pTextureRV);
+    g_pImmediateContext->PSSetShaderResources(0, 1, &g_pTextureRV); //使用文件纹理渲染到目标渲染纹理。
     g_pImmediateContext->PSSetSamplers(0, 1, &g_pSamplerLinear);
     g_pImmediateContext->DrawIndexed(6, 0, 0);
 
     //
     // Present our back buffer to our front buffer
     //
- //   g_pSwapChain->Present(0, 0);
+    g_pSwapChain->Present(0, 0);
 }
 
 //--------------------------------------------------------------------------------------
@@ -579,29 +567,10 @@ void RenderToTexture()
 void Render()
 {
     RenderToTexture();
-    // Update our time
+    // 设置渲染目标为窗口
     g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, g_pDepthStencilView);
-    static float t = 0.0f;
-    //if( g_driverType == D3D_DRIVER_TYPE_REFERENCE )
-    //{
-    //    t += ( float )XM_PI * 0.0125f;
-    //}
-    //else
-    //{
-    //    static DWORD dwTimeStart = 0;
-    //    DWORD dwTimeCur = GetTickCount();
-    //    if( dwTimeStart == 0 )
-    //        dwTimeStart = dwTimeCur;
-    //    t = ( dwTimeCur - dwTimeStart ) / 1000.0f;
-    //}
 
-    // Rotate cube around the origin
-    g_World = XMMatrixRotationY(t);
-
-    // Modify the color
-    g_vMeshColor.x = (sinf(t * 1.0f) + 1.0f) * 0.5f;
-    g_vMeshColor.y = (cosf(t * 3.0f) + 1.0f) * 0.5f;
-    g_vMeshColor.z = (sinf(t * 5.0f) + 1.0f) * 0.5f;
+    g_World = XMMatrixIdentity();
 
     //
     // Clear the back buffer
@@ -619,7 +588,6 @@ void Render()
     //
     CBChangesEveryFrame cb;
     cb.mWorld = XMMatrixTranspose(g_World);
-    cb.vMeshColor = g_vMeshColor;
     g_pImmediateContext->UpdateSubresource(g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0);
 
     //
@@ -631,7 +599,7 @@ void Render()
     g_pImmediateContext->VSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
     g_pImmediateContext->PSSetShader(g_pPixelShader, NULL, 0);
     g_pImmediateContext->PSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
-    //g_pImmediateContext->PSSetShaderResources( 0, 1, &g_pTextureRV );
+
     // 使用动态创建的被渲染的纹理，进行窗口的渲染。
     ID3D11ShaderResourceView* tempP = g_renderTextureClass.GetShaderResourceView();
     g_pImmediateContext->PSSetShaderResources(0, 1, &tempP);
