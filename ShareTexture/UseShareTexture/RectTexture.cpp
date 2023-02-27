@@ -61,7 +61,7 @@ ID3D11Buffer*                       g_pIndexBuffer = NULL;
 ID3D11Buffer*                       g_pCBNeverChanges = NULL;
 ID3D11Buffer*                       g_pCBChangeOnResize = NULL;
 ID3D11Buffer*                       g_pCBChangesEveryFrame = NULL;
-ID3D11ShaderResourceView*           g_pTextureRV = NULL;
+//ID3D11ShaderResourceView*           g_pTextureRV = NULL;
 ID3D11SamplerState*                 g_pSamplerLinear = NULL;
 XMMATRIX                            g_World;
 XMMATRIX                            g_View;
@@ -197,7 +197,7 @@ bool OpenSharedTexture(ID3D11Device* device)
     HRESULT result;
     D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
     D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-    HANDLE sharedHandle = (HANDLE)0x40002f42;
+    HANDLE sharedHandle = (HANDLE)0x40002f42; // the handle from CreateShareTexture process. start CreateSharedTexture first
     result = device->OpenSharedResource(sharedHandle, __uuidof(ID3D11Texture2D), (LPVOID*)&g_sharedTexture);
     if (FAILED(result))
     {
@@ -206,8 +206,8 @@ bool OpenSharedTexture(ID3D11Device* device)
     g_sharedTexture->GetDesc(&textureDesc);
     
     // 创建shader资源，和纹理关联起来
-    //shaderResourceViewDesc.Format = textureDesc.Format;
-    shaderResourceViewDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    shaderResourceViewDesc.Format = textureDesc.Format;
+    //shaderResourceViewDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
     shaderResourceViewDesc.Texture2D.MipLevels = 1;
@@ -458,10 +458,10 @@ HRESULT InitDevice()
     if( FAILED( hr ) )
         return hr;
 
-    // Load the Texture
-    hr = D3DX11CreateShaderResourceViewFromFile( g_pd3dDevice, L"guilin.jpg", NULL, NULL, &g_pTextureRV, NULL );
-    if( FAILED( hr ) )
-        return hr;
+    //// Load the Texture
+    //hr = D3DX11CreateShaderResourceViewFromFile( g_pd3dDevice, L"guilin.jpg", NULL, NULL, &g_pTextureRV, NULL );
+    //if( FAILED( hr ) )
+    //    return hr;
 
     // Create the sample state
     D3D11_SAMPLER_DESC sampDesc;
@@ -514,7 +514,7 @@ void CleanupDevice()
     if( g_pImmediateContext ) g_pImmediateContext->ClearState();
 
     if( g_pSamplerLinear ) g_pSamplerLinear->Release();
-    if( g_pTextureRV ) g_pTextureRV->Release();
+    //if( g_pTextureRV ) g_pTextureRV->Release();
     if( g_pCBNeverChanges ) g_pCBNeverChanges->Release();
     if( g_pCBChangeOnResize ) g_pCBChangeOnResize->Release();
     if( g_pCBChangesEveryFrame ) g_pCBChangesEveryFrame->Release();
@@ -596,8 +596,7 @@ void Render()
     g_pImmediateContext->PSSetShader(g_pPixelShader, NULL, 0);
     g_pImmediateContext->PSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
 
-
-    g_pImmediateContext->PSSetShaderResources(0, 1, &g_shaderResourceView);
+    g_pImmediateContext->PSSetShaderResources(0, 1, &g_shaderResourceView); // use SharedTexture.
     g_pImmediateContext->PSSetSamplers(0, 1, &g_pSamplerLinear);
     g_pImmediateContext->DrawIndexed(6, 0, 0);
 
