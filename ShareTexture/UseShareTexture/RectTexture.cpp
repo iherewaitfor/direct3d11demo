@@ -191,13 +191,34 @@ HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR sz
     return S_OK;
 }
 
+bool getSharedTextureHandle(HANDLE& sharedHandle) {
+    HANDLE hMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, NULL, L"ShareMemory_SharedHandle");
+
+    if (hMapping)
+    {
+        LPVOID lpBase = MapViewOfFile(hMapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0);
+        HANDLE temphandle = 0;
+        memcpy_s(&temphandle, sizeof(HANDLE), lpBase, sizeof(HANDLE));
+        sharedHandle = temphandle;
+        UnmapViewOfFile(lpBase);
+        CloseHandle(hMapping);
+        return true;
+    }
+    return false;
+}
+
 bool OpenSharedTexture(ID3D11Device* device)
 {
     D3D11_TEXTURE2D_DESC textureDesc;
     HRESULT result;
     D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
     D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-    HANDLE sharedHandle = (HANDLE)0x40002f42; // the handle from CreateShareTexture process. start CreateSharedTexture first
+    HANDLE sharedHandle = 0;
+    // the handle from CreateShareTexture process. start CreateSharedTexture first
+    if (!getSharedTextureHandle(sharedHandle)) {
+        //»ñÈ¡¹²Ïí¾ä±úÊ§°Ü¡£
+        return false;
+    }
     result = device->OpenSharedResource(sharedHandle, __uuidof(ID3D11Texture2D), (LPVOID*)&g_sharedTexture);
     if (FAILED(result))
     {

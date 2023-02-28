@@ -83,6 +83,11 @@ bool RenderTextureClass::Initialize(ID3D11Device* device, int textureWidth, int 
 	{
 		lerror = GetLastError();
 	}
+	//把共享句柄写到共享内存
+	HANDLE hMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, L"ShareMemory_SharedHandle");
+	LPVOID lpBase = MapViewOfFile(hMapping, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0);
+	memcpy_s(lpBase, 4096, &m_hsharedHandle, sizeof(HANDLE));
+
 	// QI IDXGIKeyedMutex interface of synchronized shared surface's resource handle.
 	result = m_renderTargetTexture->QueryInterface(__uuidof(IDXGIKeyedMutex),
 		(LPVOID*)&m_pDXGIKeyedMutex);
