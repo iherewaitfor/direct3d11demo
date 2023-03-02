@@ -454,8 +454,6 @@ HRESULT InitDevice()
     cbNeverChanges.mView = XMMatrixTranspose( g_View );
     g_pImmediateContext->UpdateSubresource( g_pCBNeverChanges, 0, NULL, &cbNeverChanges, 0, 0 );
 
-    // Initialize the projection matrix
-    //g_Projection = XMMatrixPerspectiveFovLH( XM_PIDIV4/2, width / (FLOAT)height, 0.01f, 100.0f );
     // 创建正交投影矩阵，主要用来实施2D渲染.
     g_Projection = XMMatrixOrthographicLH(2.0f, 2.0f, 0.1f, 100.0f);
     
