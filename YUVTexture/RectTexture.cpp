@@ -11,6 +11,7 @@
 #include "resource.h"
 
 #include <d3dx10math.h>
+#include <cstdio>
 
 //--------------------------------------------------------------------------------------
 // Structures
@@ -67,6 +68,9 @@ XMMATRIX                            g_Projection;
 XMFLOAT4                            g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
 
 ID3D11Texture2D*                    g_programTexture = NULL;
+
+ID3D11Texture2D*                    g_texturePlanes_[3]; //YUV3个纹理
+ID3D11ShaderResourceView*           g_resourceViewPlanes_[3]; //YUV3个纹理对应的ShaderResourceView
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -178,6 +182,8 @@ HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR sz
     {
         if( pErrorBlob != NULL )
             OutputDebugStringA( (char*)pErrorBlob->GetBufferPointer() );
+        LPCSTR errmsg = (char*)pErrorBlob->GetBufferPointer();
+        
         if( pErrorBlob ) pErrorBlob->Release();
         return hr;
     }
@@ -187,30 +193,11 @@ HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR sz
 }
 
 bool createTexture() {
-    const int textureWidth = 2000;
-    const int textureHeight = 2000;
+    const int textureWidth = 320;
+    const int textureHeight = 180;
     D3D11_TEXTURE2D_DESC textureDesc;
     HRESULT result;
     D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-
-
-    char* pData = new char[textureWidth * textureHeight * 4];
-    ZeroMemory(pData, textureWidth * textureHeight * 4);
-    for (int j = 0; j < textureHeight; j++) {
-        for (int i = 0; i < textureWidth; i++) {
-            int offset = j * textureWidth + i * 4;
-            *(pData + offset) = 255; //R
-            *(pData + offset + 1) = 0; //G
-            *(pData + offset + 2) = 125; //B
-            *(pData + offset + 3) = 255; //A
-        }
-    }
-
-    D3D11_SUBRESOURCE_DATA initData = { 0 };
-    initData.pSysMem = (const void*)pData;
-    initData.SysMemPitch = textureWidth * 4;
-    //initData.SysMemSlicePitch = textureWidth * textureHeight * 4;
-    initData.SysMemSlicePitch = 0;
 
     //创建2d纹理，
     ZeroMemory(&textureDesc, sizeof(textureDesc));
@@ -219,7 +206,7 @@ bool createTexture() {
     textureDesc.Height = textureHeight;
     textureDesc.MipLevels = 1;
     textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    textureDesc.Format = DXGI_FORMAT_R8_UNORM;
 
     textureDesc.SampleDesc.Count = 1;
     textureDesc.SampleDesc.Quality = 0;
@@ -229,34 +216,88 @@ bool createTexture() {
     textureDesc.MiscFlags = 0;
     //textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-    result = g_pd3dDevice->CreateTexture2D(&textureDesc, &initData, &g_programTexture);
-    //result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_programTexture);
+    result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_texturePlanes_[0]);//Y纹理
     if (FAILED(result))
     {
         return false;
     }
-
+    textureDesc.Width = textureWidth/2;
+    textureDesc.Height = textureHeight/2;
+    result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_texturePlanes_[1]);//U纹理
+    if (FAILED(result))
+    {
+        return false;
+    }
+    result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_texturePlanes_[2]);//V纹理
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
     // 创建shader资源，和纹理关联起来
     shaderResourceViewDesc.Format = textureDesc.Format;
     shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
     shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
-    result = g_pd3dDevice->CreateShaderResourceView(g_programTexture, &shaderResourceViewDesc, &g_pTextureRV);
-    if (FAILED(result))
-    {
-        return false;
+    for (int i = 0; i < 3; i++) {
+        result = g_pd3dDevice->CreateShaderResourceView(g_texturePlanes_[i], &shaderResourceViewDesc, &g_resourceViewPlanes_[i]);
+        if (FAILED(result))
+        {
+            return false;
+        }
     }
 
-    ////更新纹理数据。
+    //YUV file
+    FILE* infile = NULL;
+    const int Width = textureWidth; //video width
+    const int Height = textureHeight; //video height
+
+    unsigned char buf[Width * Height * 3 / 2];
+    unsigned char* plane[3];
+
+
+    if ((infile = fopen("test_yuv420p_320x180.yuv", "rb")) == NULL) {
+        printf("cannot open this file\n");
+        return false;
+    }
+    //display the frame 30 
+    for (int j = 0; j < 30; j++) {
+        if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
+            // Loop
+            fseek(infile, 0, SEEK_SET);
+            fread(buf, 1, Width * Height * 3 / 2, infile);
+        }
+
+    }
+    //if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
+    //    // Loop
+    //    fseek(infile, 0, SEEK_SET);
+    //    fread(buf, 1, Width * Height * 3 / 2, infile);
+    //}
+    //yuvdata
+    plane[0] = buf;  //Y
+    plane[1] = plane[0] + Width * Height; //U
+    plane[2] = plane[1] + Width * Height / 4; //V
+
+    ////更新Y纹理数据。
     //D3D11_BOX destRegion;
     //destRegion.left = 0;
-    //destRegion.right = textureWidth;
+    //destRegion.right = Width;
     //destRegion.top = 0;
-    //destRegion.bottom = textureHeight;
+    //destRegion.bottom = Height;
     //destRegion.front = 0;
     //destRegion.back = 1;
-    //g_pImmediateContext->UpdateSubresource(g_programTexture, 0, &destRegion, pData, textureWidth * 4, 0);
+    //g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, &destRegion, plane[0], Width, 0);
+    
+    //更新Y纹理数据。
+    g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, NULL, plane[0], Width, 0);
+    //更新U纹理数据。
+    g_pImmediateContext->UpdateSubresource(g_texturePlanes_[1], 0, NULL, plane[1], Width/2, 0);
+    //更新V纹理数据。
+    g_pImmediateContext->UpdateSubresource(g_texturePlanes_[2], 0, NULL, plane[2], Width/2, 0);
+
+
 }
 
 //--------------------------------------------------------------------------------------
@@ -657,7 +698,7 @@ void Render()
     g_pImmediateContext->VSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
     g_pImmediateContext->PSSetShader( g_pPixelShader, NULL, 0 );
     g_pImmediateContext->PSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
-    g_pImmediateContext->PSSetShaderResources( 0, 1, &g_pTextureRV );
+    g_pImmediateContext->PSSetShaderResources( 0, 3, g_resourceViewPlanes_);
     g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
     g_pImmediateContext->DrawIndexed( 6, 0, 0 );
 

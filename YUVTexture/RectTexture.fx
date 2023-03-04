@@ -1,13 +1,9 @@
 //--------------------------------------------------------------------------------------
-// File: Tutorial07.fx
-//
-// Copyright (c) Microsoft Corporation. All rights reserved.
-//--------------------------------------------------------------------------------------
-
-//--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
-Texture2D txDiffuse : register( t0 );
+Texture2D txY : register( t0 );
+Texture2D txU : register( t1 );
+Texture2D txV : register( t2 );
 SamplerState samLinear : register( s0 );
 
 cbuffer cbNeverChanges : register( b0 )
@@ -61,6 +57,11 @@ PS_INPUT VS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 float4 PS( PS_INPUT input) : SV_Target
 {
-    // return txDiffuse.Sample( samLinear, input.Tex ) * vMeshColor;
-    return txDiffuse.Sample( samLinear, input.Tex );
+	float y = txY.Sample(samLinear, input.Tex).r;
+    float u = txU.Sample(samLinear, input.Tex).r  - 0.5f;
+    float v = txV.Sample(samLinear, input.Tex).r  - 0.5f;
+    float r = y + 1.14f * v;
+	float g = y - 0.394f * u - 0.581f * v;
+	float b = y + 2.03f * u;
+	return float4(r,g,b, 1.0f);
 }
