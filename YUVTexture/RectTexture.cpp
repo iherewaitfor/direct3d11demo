@@ -193,8 +193,10 @@ HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR sz
 }
 
 bool createTexture() {
-    const int textureWidth = 320;
-    const int textureHeight = 180;
+    //const int textureWidth = 320;
+    //const int textureHeight = 180;
+    const int textureWidth = 640;
+    const int textureHeight = 360;
     D3D11_TEXTURE2D_DESC textureDesc;
     HRESULT result;
     D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
@@ -257,24 +259,24 @@ bool createTexture() {
     unsigned char* plane[3];
 
 
-    if ((infile = fopen("test_yuv420p_320x180.yuv", "rb")) == NULL) {
+    if ((infile = fopen("guilin_640x360_yuv420.yuv", "rb")) == NULL) {
         printf("cannot open this file\n");
         return false;
     }
     //display the frame 30 
-    for (int j = 0; j < 30; j++) {
-        if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
-            // Loop
-            fseek(infile, 0, SEEK_SET);
-            fread(buf, 1, Width * Height * 3 / 2, infile);
-        }
+    //for (int j = 0; j < 30; j++) {
+    //    if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
+    //        // Loop
+    //        fseek(infile, 0, SEEK_SET);
+    //        fread(buf, 1, Width * Height * 3 / 2, infile);
+    //    }
 
-    }
-    //if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
-    //    // Loop
-    //    fseek(infile, 0, SEEK_SET);
-    //    fread(buf, 1, Width * Height * 3 / 2, infile);
     //}
+    if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
+        // Loop
+        fseek(infile, 0, SEEK_SET);
+        fread(buf, 1, Width * Height * 3 / 2, infile);
+    }
     //yuvdata
     plane[0] = buf;  //Y
     plane[1] = plane[0] + Width * Height; //U
@@ -297,7 +299,7 @@ bool createTexture() {
     //更新V纹理数据。
     g_pImmediateContext->UpdateSubresource(g_texturePlanes_[2], 0, NULL, plane[2], Width/2, 0);
 
-
+    return true;
 }
 
 //--------------------------------------------------------------------------------------
@@ -624,38 +626,6 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 
     return 0;
 }
-void updateTexture() {
-    static int tc = 0;
-    tc++;
-    const int textureWidth = 640;
-    const int textureHeight = 480;
-    D3D11_TEXTURE2D_DESC textureDesc;
-    HRESULT result;
-    D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-
-
-    static char* pData = new char[textureWidth * textureHeight * 4];
-    ZeroMemory(pData, textureWidth * textureHeight * 4);
-    for (int j = 0; j < textureHeight; j++) {
-        for (int i = 0; i < textureWidth; i++) {
-            int offset = j * textureWidth + i * 4;
-            *(pData + offset) = (tc%2 == 0 ? 255:0); //R
-            *(pData + offset + 1) = 255; //G
-            *(pData + offset + 2) = 0; //B
-            *(pData + offset + 3) = 255; //A
-        }
-    }
-    //更新纹理数据。
-    D3D11_BOX destRegion;
-    destRegion.left = 0;
-    destRegion.right = textureWidth;
-    destRegion.top = 0;
-    destRegion.bottom = textureHeight;
-    destRegion.front = 0;
-    destRegion.back = 1;
-    g_pImmediateContext->UpdateSubresource(g_programTexture, 0, &destRegion, pData, textureWidth * 4, 0);
-}
-
 //--------------------------------------------------------------------------------------
 // Render a frame
 //--------------------------------------------------------------------------------------

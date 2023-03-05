@@ -28,6 +28,11 @@ target_link_libraries(Demo d3d11.lib d3dcompiler.lib d3dx11d.lib d3dx9d.lib dxer
 
 add_custom_command(TARGET Demo
   POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/guilin_640x360_yuv420.yuv ${PROJECT_BINARY_DIR}/$<CONFIGURATION>
+  )
+ 
+add_custom_command(TARGET Demo
+  POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/test_yuv420p_320x180.yuv ${PROJECT_BINARY_DIR}/$<CONFIGURATION>
   )
 
@@ -35,6 +40,11 @@ add_custom_command(TARGET Demo
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/RectTexture.fx ${PROJECT_BINARY_DIR}/$<CONFIGURATION>
   )
+  
+add_custom_command(TARGET Demo
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/guilin_640x360_yuv420.yuv ${CMAKE_CURRENT_BINARY_DIR}
+  ) 
 
 add_custom_command(TARGET Demo
   POST_BUILD
