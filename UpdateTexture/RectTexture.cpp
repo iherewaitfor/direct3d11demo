@@ -187,8 +187,8 @@ HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR sz
 }
 
 bool createTexture() {
-    const int textureWidth = 2000;
-    const int textureHeight = 2000;
+    const int textureWidth = 512;
+    const int textureHeight = 512;
     D3D11_TEXTURE2D_DESC textureDesc;
     HRESULT result;
     D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
@@ -208,7 +208,7 @@ bool createTexture() {
 
     D3D11_SUBRESOURCE_DATA initData = { 0 };
     initData.pSysMem = (const void*)pData;
-    initData.SysMemPitch = textureWidth * 4;
+    initData.SysMemPitch = textureWidth ; 
     //initData.SysMemSlicePitch = textureWidth * textureHeight * 4;
     initData.SysMemSlicePitch = 0;
 
@@ -227,10 +227,9 @@ bool createTexture() {
     textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     textureDesc.CPUAccessFlags = 0;
     textureDesc.MiscFlags = 0;
-    //textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-    result = g_pd3dDevice->CreateTexture2D(&textureDesc, &initData, &g_programTexture);
-    //result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_programTexture);
+    result = g_pd3dDevice->CreateTexture2D(&textureDesc, &initData, &g_programTexture);//传入数据初始化纹理。
+    //result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_programTexture); //不传入数据初始化，（D3D11_USAGE_DEFAULT）后续可以使用UpdateSubresource更新纹理。
     if (FAILED(result))
     {
         return false;
@@ -256,7 +255,10 @@ bool createTexture() {
     //destRegion.bottom = textureHeight;
     //destRegion.front = 0;
     //destRegion.back = 1;
-    //g_pImmediateContext->UpdateSubresource(g_programTexture, 0, &destRegion, pData, textureWidth * 4, 0);
+    //g_pImmediateContext->UpdateSubresource(g_programTexture, 0, &destRegion, pData, textureWidth , 0);
+
+    ////D3D11_BOX填NULL，表示整张纹理。
+    //g_pImmediateContext->UpdateSubresource(g_programTexture, 0, NULL, pData, textureWidth , 0);
 }
 
 //--------------------------------------------------------------------------------------
