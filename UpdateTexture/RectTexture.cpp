@@ -198,7 +198,7 @@ bool createTexture() {
     ZeroMemory(pData, textureWidth * textureHeight * 4);
     for (int j = 0; j < textureHeight; j++) {
         for (int i = 0; i < textureWidth; i++) {
-            int offset = j * textureWidth + i * 4;
+            int offset = j * textureWidth * 4 + i * 4;
             *(pData + offset) = 255; //R
             *(pData + offset + 1) = 0; //G
             *(pData + offset + 2) = 125; //B
@@ -208,7 +208,7 @@ bool createTexture() {
 
     D3D11_SUBRESOURCE_DATA initData = { 0 };
     initData.pSysMem = (const void*)pData;
-    initData.SysMemPitch = textureWidth ; 
+    initData.SysMemPitch = textureWidth * 4; //一行的字节大小（子资源为2D/3D纹理时使用）
     //initData.SysMemSlicePitch = textureWidth * textureHeight * 4;
     initData.SysMemSlicePitch = 0;
 
@@ -255,10 +255,10 @@ bool createTexture() {
     //destRegion.bottom = textureHeight;
     //destRegion.front = 0;
     //destRegion.back = 1;
-    //g_pImmediateContext->UpdateSubresource(g_programTexture, 0, &destRegion, pData, textureWidth , 0);
+    //g_pImmediateContext->UpdateSubresource(g_programTexture, 0, &destRegion, pData, textureWidth * 4 , 0);
 
     ////D3D11_BOX填NULL，表示整张纹理。
-    //g_pImmediateContext->UpdateSubresource(g_programTexture, 0, NULL, pData, textureWidth , 0);
+    //g_pImmediateContext->UpdateSubresource(g_programTexture, 0, NULL, pData, textureWidth * 4 , 0);
 }
 
 //--------------------------------------------------------------------------------------
