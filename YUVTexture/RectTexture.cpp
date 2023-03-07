@@ -60,14 +60,10 @@ ID3D11Buffer*                       g_pIndexBuffer = NULL;
 ID3D11Buffer*                       g_pCBNeverChanges = NULL;
 ID3D11Buffer*                       g_pCBChangeOnResize = NULL;
 ID3D11Buffer*                       g_pCBChangesEveryFrame = NULL;
-ID3D11ShaderResourceView*           g_pTextureRV = NULL;
 ID3D11SamplerState*                 g_pSamplerLinear = NULL;
 XMMATRIX                            g_World;
 XMMATRIX                            g_View;
 XMMATRIX                            g_Projection;
-XMFLOAT4                            g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
-
-ID3D11Texture2D*                    g_programTexture = NULL;
 
 ID3D11Texture2D*                    g_texturePlanes_[3]; //YUV3个纹理
 ID3D11ShaderResourceView*           g_resourceViewPlanes_[3]; //YUV3个纹理对应的ShaderResourceView
@@ -216,7 +212,6 @@ bool createTexture() {
     textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     textureDesc.CPUAccessFlags = 0;
     textureDesc.MiscFlags = 0;
-    //textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
     result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_texturePlanes_[0]);//Y纹理
     if (FAILED(result))
@@ -273,7 +268,6 @@ bool createTexture() {
 
     //}
     if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
-        // Loop
         fseek(infile, 0, SEEK_SET);
         fread(buf, 1, Width * Height * 3 / 2, infile);
     }
@@ -547,7 +541,7 @@ HRESULT InitDevice()
     sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-    hr = g_pd3dDevice->CreateSamplerState( &sampDesc, &g_pSamplerLinear );
+    hr = g_pd3dDevice->CreateSamplerState( &sampDesc, &g_pSamplerLinear ); //创建采样器
     if( FAILED( hr ) )
         return hr;
 
@@ -583,7 +577,6 @@ void CleanupDevice()
     if( g_pImmediateContext ) g_pImmediateContext->ClearState();
 
     if( g_pSamplerLinear ) g_pSamplerLinear->Release();
-    if( g_pTextureRV ) g_pTextureRV->Release();
     if( g_pCBNeverChanges ) g_pCBNeverChanges->Release();
     if( g_pCBChangeOnResize ) g_pCBChangeOnResize->Release();
     if( g_pCBChangesEveryFrame ) g_pCBChangesEveryFrame->Release();
@@ -635,11 +628,6 @@ void Render()
     // Rotate cube around the origin
     g_World = XMMatrixRotationY( t );
 
-    // Modify the color
-    g_vMeshColor.x = ( sinf( t * 1.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.y = ( cosf( t * 3.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.z = ( sinf( t * 5.0f ) + 1.0f ) * 0.5f;
-
     //
     // Clear the back buffer
     //
@@ -656,7 +644,6 @@ void Render()
     //
     CBChangesEveryFrame cb;
     cb.mWorld = XMMatrixTranspose( g_World );
-    cb.vMeshColor = g_vMeshColor;
     g_pImmediateContext->UpdateSubresource( g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0 );
 
     //
@@ -668,7 +655,7 @@ void Render()
     g_pImmediateContext->VSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
     g_pImmediateContext->PSSetShader( g_pPixelShader, NULL, 0 );
     g_pImmediateContext->PSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
-    g_pImmediateContext->PSSetShaderResources( 0, 3, g_resourceViewPlanes_);
+    g_pImmediateContext->PSSetShaderResources( 0, 3, g_resourceViewPlanes_);//设置3个纹理到显卡
     g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
     g_pImmediateContext->DrawIndexed( 6, 0, 0 );
 

@@ -1,25 +1,26 @@
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
-Texture2D txY : register( t0 );
-Texture2D txU : register( t1 );
-Texture2D txV : register( t2 );
+//由c++中的PSSetShaderResources( 0, 3, g_resourceViewPlanes_)设置了3个纹理。
+Texture2D txY : register( t0 );  //t0对应纹理0，
+Texture2D txU : register( t1 );  //t1对应纹理1
+Texture2D txV : register( t2 );  //t2对应纹理2
 SamplerState samLinear : register( s0 );
 
-cbuffer cbNeverChanges : register( b0 )
+//由  g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pCBNeverChanges )指定。
+cbuffer cbNeverChanges : register( b0 )  //b0对应ConstantBuffer0
 {
     matrix View;
 };
 
-cbuffer cbChangeOnResize : register( b1 )
+cbuffer cbChangeOnResize : register( b1 ) //b1对应ConstantBuffer1
 {
     matrix Projection;
 };
 
-cbuffer cbChangesEveryFrame : register( b2 )
+cbuffer cbChangesEveryFrame : register( b2 )//b1对应ConstantBuffer2
 {
     matrix World;
-    float4 vMeshColor;
 };
 
 
