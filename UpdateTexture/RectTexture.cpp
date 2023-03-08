@@ -64,7 +64,6 @@ ID3D11SamplerState*                 g_pSamplerLinear = NULL;
 XMMATRIX                            g_World;
 XMMATRIX                            g_View;
 XMMATRIX                            g_Projection;
-XMFLOAT4                            g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
 
 ID3D11Texture2D*                    g_programTexture = NULL;
 
@@ -629,34 +628,6 @@ void updateTexture() {
 //--------------------------------------------------------------------------------------
 void Render()
 {
-    //static int tt = 0;
-    //tt++;
-    //if (tt != 3000000)return;
-    //tt = 0;
-    //updateTexture();
-    // Update our time
-    static float t = 0.0f;
-    //if( g_driverType == D3D_DRIVER_TYPE_REFERENCE )
-    //{
-    //    t += ( float )XM_PI * 0.0125f;
-    //}
-    //else
-    //{
-    //    static DWORD dwTimeStart = 0;
-    //    DWORD dwTimeCur = GetTickCount();
-    //    if( dwTimeStart == 0 )
-    //        dwTimeStart = dwTimeCur;
-    //    t = ( dwTimeCur - dwTimeStart ) / 1000.0f;
-    //}
-
-    // Rotate cube around the origin
-    g_World = XMMatrixRotationY( t );
-
-    // Modify the color
-    g_vMeshColor.x = ( sinf( t * 1.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.y = ( cosf( t * 3.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.z = ( sinf( t * 5.0f ) + 1.0f ) * 0.5f;
-
     //
     // Clear the back buffer
     //
@@ -673,7 +644,6 @@ void Render()
     //
     CBChangesEveryFrame cb;
     cb.mWorld = XMMatrixTranspose( g_World );
-    cb.vMeshColor = g_vMeshColor;
     g_pImmediateContext->UpdateSubresource( g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0 );
 
     //
