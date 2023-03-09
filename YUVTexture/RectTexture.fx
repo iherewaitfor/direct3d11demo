@@ -28,7 +28,7 @@ cbuffer cbChangesEveryFrame : register( b2 )//b1对应ConstantBuffer2
 struct VS_INPUT
 {
     float4 Pos : POSITION;
-    float2 Tex : TEXCOORD0;
+    float2 Tex : TEXCOORD0; //纹理0的坐标。由于YUV的纹理坐标用的都是一样的。所以只取纹理0（Y纹理）的坐标就可以的。UV也用Y的纹理坐标
 };
 
 struct PS_INPUT
