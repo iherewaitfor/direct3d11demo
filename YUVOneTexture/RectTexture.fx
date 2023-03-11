@@ -1,10 +1,9 @@
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
-//由c++中的PSSetShaderResources( 0, 3, g_resourceViewPlanes_)设置了3个纹理。
-Texture2D txY : register( t0 );  //t0对应纹理0，
-Texture2D txU : register( t1 );  //t1对应纹理1
-Texture2D txV : register( t2 );  //t2对应纹理2
+//由c++中的PSSetShaderResources( 0, 1, g_resourceViewPlanes_)设置了1个纹理。
+Texture2D tx : register( t0 );  //t0对应纹理0，
+
 SamplerState samLinear : register( s0 );
 
 //由  g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pCBNeverChanges )指定。
@@ -25,15 +24,17 @@ cbuffer cbChangesEveryFrame : register( b2 )//b2对应ConstantBuffer2
 
 cbuffer cbTextDesc : register( b3 )//b3对应ConstantBuffer3
 {
-    int videoWidth;
-    int videoHeight;
+    int videoWidth;  //原视频的宽度
+    int videoHeight; //原视频的高度
+    int t0; //占位不用
+    int t1; //占位不用
 };
 
 //--------------------------------------------------------------------------------------
 struct VS_INPUT
 {
     float4 Pos : POSITION;
-    float2 Tex : TEXCOORD0; //纹理0的坐标。由于YUV的纹理坐标用的都是一样的。所以只取纹理0（Y纹理）的坐标就可以的。UV也用Y的纹理坐标
+    float2 Tex : TEXCOORD0; //单一纹理坐标。Y、U、V对应纹理的坐标需要做对应转换
 };
 
 struct PS_INPUT
@@ -64,22 +65,23 @@ PS_INPUT VS( VS_INPUT input )
 float4 PS( PS_INPUT input) : SV_Target
 {
     //先计算yuv数据对应的纹理坐标，在单一纹理中的对应的纹理位置
-    float2 yTextUV;
+    float2 yTextUV; //Y纹理在单一纹理中的纹理坐标。
     yTextUV.x = input.Tex.x; //y纹理对应的横坐标，即单一纹理的横坐标
     yTextUV.y = input.Tex.y * 2/3; // y纹理对应纵坐标，对应单一纹理的纵坐标的位置。
 
-    float2 uTextUV;
-    int ch = floor(input.Tex.x*2/videoHeight+0.2);
-    uTextUV.x = 1.0/2*input.Tex.x + 0.5*(ch%2);
-    uTextUV.y = 2.0/3+ ch/2*2.0/3.0/videoHeight;
+    float2 uTextUV; //U纹理在单一纹理中的纹理坐标。
+    const float PRECISION_OFFSET = 0.2f;
+    int ch = floor(input.Tex.y*videoHeight*0.5f + PRECISION_OFFSET); //从归一化坐标 转换回整数矩形坐标。U的高为videoHeight/2
+    uTextUV.x = input.Tex.x*0.5f + 0.5f*(ch%2);
+    uTextUV.y = 2.0f/3 + ch/2*2.0f/3.0/videoHeight;
 
-    float2 vTextUV;
+    float2 vTextUV; //V纹理在单一纹理中的纹理坐标。
     vTextUV.x = uTextUV.x;//UV纹理的横坐标相同。
-    vTextUV.y = 1.0/6 + uTextUV.y;
+    vTextUV.y = 1.0f/6 + uTextUV.y;
 
-	float y = txY.Sample(samLinear, yTextUV).r;
-    float u = txU.Sample(samLinear, uTextUV).r  - 0.5f;
-    float v = txV.Sample(samLinear, vTextUV).r  - 0.5f;
+	float y = tx.Sample(samLinear, yTextUV).r;
+    float u = tx.Sample(samLinear, uTextUV).r  - 0.5f;
+    float v = tx.Sample(samLinear, vTextUV).r  - 0.5f;
     float r = y + 1.14f * v;
 	float g = y - 0.394f * u - 0.581f * v;
 	float b = y + 2.03f * u;
