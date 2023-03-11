@@ -38,9 +38,11 @@ struct CBChangesEveryFrame
     XMFLOAT4 vMeshColor;
 };
 
-struct CBTextDesc {
+struct CBTextDesc { //注意ConstBuffer的大小必须是16字节的整数倍，否则会创建失败。
     int videoWidth;  //视频的宽度w
     int videoHeight; //视频的高度h
+    int t0;          //对齐占位用
+    int t1;          //对齐占位用
 };
 
 //--------------------------------------------------------------------------------------
@@ -519,7 +521,11 @@ HRESULT InitDevice()
         return hr;
 
     bd.ByteWidth = sizeof(CBTextDesc);
-    hr = g_pd3dDevice->CreateBuffer( &bd, NULL, &g_pCBTextDesc);
+    CBTextDesc td2;
+    td2.videoWidth = 640;
+    td2.videoHeight = 360;
+    InitData.pSysMem = &td2;
+    hr = g_pd3dDevice->CreateBuffer( &bd, &InitData, &g_pCBTextDesc);
     if (FAILED(hr))
         return hr;
 
@@ -642,10 +648,10 @@ void Render()
     cb.mWorld = XMMatrixTranspose( g_World );
     g_pImmediateContext->UpdateSubresource( g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0 );
 
-    CBTextDesc td;
-    td.videoWidth = 640;
-    td.videoHeight = 360;
-    g_pImmediateContext->UpdateSubresource(g_pCBTextDesc, 0, NULL, &td, 0, 0);
+    //CBTextDesc td;
+    //td.videoWidth = 640;
+    //td.videoHeight = 360;
+    //g_pImmediateContext->UpdateSubresource(g_pCBTextDesc, 0, NULL, &td, 0, 0);
     //
     // Render the cube
     //
@@ -656,7 +662,7 @@ void Render()
     g_pImmediateContext->PSSetConstantBuffers( 3, 1, &g_pCBTextDesc);
     g_pImmediateContext->PSSetShader( g_pPixelShader, NULL, 0 );
 
-    g_pImmediateContext->PSSetShaderResources( 0, 3, g_resourceViewPlanes_);//设置3个纹理到显卡
+    g_pImmediateContext->PSSetShaderResources( 0, 1, g_resourceViewPlanes_);//设置1个纹理到显卡
     g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
     g_pImmediateContext->DrawIndexed( 6, 0, 0 );
 
