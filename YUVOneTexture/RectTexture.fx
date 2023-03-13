@@ -71,13 +71,17 @@ float4 PS( PS_INPUT input) : SV_Target
 
     float2 uTextUV; //U纹理在单一纹理中的纹理坐标。
     const float PRECISION_OFFSET = 0.2f;
-    int ch = floor(input.Tex.y*videoHeight*0.5f + PRECISION_OFFSET); //从归一化坐标 转换回整数矩形坐标。U的高为videoHeight/2
-    uTextUV.x = input.Tex.x*0.5f + 0.5f*(ch%2);
-    uTextUV.y = 2.0f/3 + ch/2*2.0f/3.0/videoHeight;
+    const int uHeight = videoHeight/2; // U纹理的高度值 
+    int uh = floor(input.Tex.y*uHeight + PRECISION_OFFSET); //从归一化坐标 转换回整数矩形坐标。U的高为videoHeight/2
+    uTextUV.x = input.Tex.x*0.5f + 0.5f*(uh%2);
+
+    uh = (uh < 2 ? 2 : uh); //上边缘对齐。解决上边缘绿色问题
+    uh = (uHeight - uh < 2 ? (uHeight - 2) : uh ); //下边缘对齐，解决下边缘绿色问题
+    uTextUV.y = 2.0f/3 + uh/2*2.0f/3.0/videoHeight;
 
     float2 vTextUV; //V纹理在单一纹理中的纹理坐标。
     vTextUV.x = uTextUV.x;//UV纹理的横坐标相同。
-    vTextUV.y = 1.0f/6 + uTextUV.y;
+    vTextUV.y = 1.0f/6 + uTextUV.y; //在单一纹理中，V纹理的纵坐标比U纹理的低1/6。填充数据量，是按YUV的顺序填的数据。
 
 	float y = tx.Sample(samLinear, yTextUV).r;
     float u = tx.Sample(samLinear, uTextUV).r  - 0.5f;
