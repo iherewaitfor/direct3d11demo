@@ -73,12 +73,10 @@ XMMATRIX                            g_World;
 XMMATRIX                            g_View;
 XMMATRIX                            g_Projection;
 
-ID3D11Texture2D*                    g_texturePlanes_[1]; //
-ID3D11ShaderResourceView*           g_resourceViewPlanes_[1]; //
-
 //共享
-HANDLE				                g_hsharedHandle = NULL;
-IDXGIKeyedMutex*                    g_pDXGIKeyedMutex  = NULL;
+ID3D11Texture2D*                    g_sharedTexture = NULL; //共享纹理
+ID3D11ShaderResourceView*           g_shaderResourceView = NULL;//shader资源
+IDXGIKeyedMutex*                    g_pDXGIKeyedMutex = NULL;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -155,7 +153,7 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow )
     g_hInst = hInstance;
     RECT rc = { 0, 0, 640, 480 };
     AdjustWindowRect( &rc, WS_OVERLAPPEDWINDOW, FALSE );
-    g_hWnd = CreateWindow( L"TutorialWindowClass", L"Direct3D 11 YUVOneTexture", WS_OVERLAPPEDWINDOW,
+    g_hWnd = CreateWindow( L"TutorialWindowClass", L"Direct3D 11 UseShareTextureYUV", WS_OVERLAPPEDWINDOW,
                            CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, NULL, NULL, hInstance,
                            NULL );
     if( !g_hWnd )
@@ -200,122 +198,58 @@ HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR sz
     return S_OK;
 }
 
-bool createTexture() {
-    //const int textureWidth = 320;
-    //const int textureHeight = 180;
-    const int textureWidth = 640;
-    const int textureHeight = 360;
+bool getSharedTextureHandle(HANDLE& sharedHandle) {
+    HANDLE hMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, NULL, L"ShareMemory_SharedHandle_YUV");
+
+    if (hMapping)
+    {
+        LPVOID lpBase = MapViewOfFile(hMapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0);
+        HANDLE temphandle = 0;
+        memcpy_s(&temphandle, sizeof(HANDLE), lpBase, sizeof(HANDLE));
+        sharedHandle = temphandle;
+        UnmapViewOfFile(lpBase);
+        CloseHandle(hMapping);
+        return true;
+    }
+    return false;
+}
+
+bool OpenSharedTexture(ID3D11Device* device)
+{
     D3D11_TEXTURE2D_DESC textureDesc;
     HRESULT result;
+    D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
     D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-
-    //创建2d纹理，
-    ZeroMemory(&textureDesc, sizeof(textureDesc));
-
-    textureDesc.Width = textureWidth;      //单一纹理的宽度与视频宽度相同
-    textureDesc.Height = textureHeight*3/2;//单一纹理的高度（w*h+1/2*w*1/2*h+1/2*w*1/2h)/2=3/2h
-    textureDesc.MipLevels = 1;
-    textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8_UNORM;
-
-    textureDesc.SampleDesc.Count = 1;
-    textureDesc.SampleDesc.Quality = 0;
-    textureDesc.Usage = D3D11_USAGE_DEFAULT;
-    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    textureDesc.CPUAccessFlags = 0;
-    //textureDesc.MiscFlags = 0;
-    textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
-
-    result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_texturePlanes_[0]);//YUV单一纹理
+    HANDLE sharedHandle = 0;
+    // the handle from CreateShareTexture process. start CreateSharedTexture first
+    if (!getSharedTextureHandle(sharedHandle)) {
+        //获取共享句柄失败。
+        return false;
+    }
+    result = device->OpenSharedResource(sharedHandle, __uuidof(ID3D11Texture2D), (LPVOID*)&g_sharedTexture);
     if (FAILED(result))
     {
         return false;
     }
+    g_sharedTexture->GetDesc(&textureDesc);
 
-    
     // 创建shader资源，和纹理关联起来
     shaderResourceViewDesc.Format = textureDesc.Format;
     shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
     shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
-    for (int i = 0; i < 1; i++) {//使用单一纹理
-        result = g_pd3dDevice->CreateShaderResourceView(g_texturePlanes_[i], &shaderResourceViewDesc, &g_resourceViewPlanes_[i]);
-        if (FAILED(result))
-        {
-            return false;
-        }
-    }
-
-    // QI IDXGIResource interface to synchronized shared surface.
-    IDXGIResource* pDXGIResource = NULL;
-    g_texturePlanes_[0]->QueryInterface(__uuidof(IDXGIResource), (LPVOID*)&pDXGIResource);
-
-    // obtain handle to IDXGIResource object.
-    pDXGIResource->GetSharedHandle(&g_hsharedHandle);
-    pDXGIResource->Release();
-    DWORD lerror = 0;
-    if (!g_hsharedHandle)
+    result = device->CreateShaderResourceView(g_sharedTexture, &shaderResourceViewDesc, &g_shaderResourceView);
+    if (FAILED(result))
     {
-        lerror = GetLastError();
+        return false;
     }
-    //把共享句柄写到共享内存
-    HANDLE hMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, L"ShareMemory_SharedHandle_YUV");
-    LPVOID lpBase = MapViewOfFile(hMapping, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0);
-    memcpy_s(lpBase, 4096, &g_hsharedHandle, sizeof(HANDLE));
 
     // QI IDXGIKeyedMutex interface of synchronized shared surface's resource handle.
-    result = g_texturePlanes_[0]->QueryInterface(__uuidof(IDXGIKeyedMutex),
+    result = g_sharedTexture->QueryInterface(__uuidof(IDXGIKeyedMutex),
         (LPVOID*)&g_pDXGIKeyedMutex);
     if (FAILED(result) || (g_pDXGIKeyedMutex == NULL))
         return false;
-
-    //YUV file
-    FILE* infile = NULL;
-    const int Width = textureWidth; //video width
-    const int Height = textureHeight; //video height
-
-    unsigned char buf[Width * Height * 3 / 2];
-    unsigned char* plane[3];
-
-
-    if ((infile = fopen("guilin_640x360_yuv420.yuv", "rb")) == NULL) {
-        printf("cannot open this file\n");
-        return false;
-    }
-    //display the frame 30 
-    //for (int j = 0; j < 30; j++) {
-    //    if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
-    //        // Loop
-    //        fseek(infile, 0, SEEK_SET);
-    //        fread(buf, 1, Width * Height * 3 / 2, infile);
-    //    }
-
-    //}
-    if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
-        fseek(infile, 0, SEEK_SET);
-        fread(buf, 1, Width * Height * 3 / 2, infile);
-    }
-    //yuvdata
-    plane[0] = buf;  //Y
-    plane[1] = plane[0] + Width * Height; //U
-    plane[2] = plane[1] + Width * Height / 4; //V
-
-    ////更新单一纹理数据。
-    //D3D11_BOX destRegion;
-    //destRegion.left = 0;
-    //destRegion.right = Width;
-    //destRegion.top = 0;
-    //destRegion.bottom = Height;
-    //destRegion.front = 0;
-    //destRegion.back = 1;
-    //g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, &destRegion, plane[0], Width, 0);
-    
-    //更新单一纹理数据。
-    g_pDXGIKeyedMutex->AcquireSync(0, INFINITE);
-    g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, NULL, plane[0], Width, 0);
-    g_pDXGIKeyedMutex->ReleaseSync(0);
-
     return true;
 }
 
@@ -550,18 +484,19 @@ HRESULT InitDevice()
     if( FAILED( hr ) )
         return hr;
 
+
+    OpenSharedTexture(g_pd3dDevice);
+    D3D11_TEXTURE2D_DESC textureDesc2;
+    g_sharedTexture->GetDesc(&textureDesc2);
+
     bd.ByteWidth = sizeof(CBTextDesc);
     CBTextDesc td2;
-    td2.videoWidth = 640;
-    td2.videoHeight = 360;
+    td2.videoWidth = textureDesc2.Width;//640
+    td2.videoHeight = textureDesc2.Height;//320
     InitData.pSysMem = &td2;
     hr = g_pd3dDevice->CreateBuffer( &bd, &InitData, &g_pCBTextDesc);
     if (FAILED(hr))
         return hr;
-
-    //初建好纹理，并更新纹理数据
-    createTexture();
-    
 
     // Create the sample state
     D3D11_SAMPLER_DESC sampDesc;
@@ -678,10 +613,6 @@ void Render()
     cb.mWorld = XMMatrixTranspose( g_World );
     g_pImmediateContext->UpdateSubresource( g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0 );
 
-    //CBTextDesc td;
-    //td.videoWidth = 640;
-    //td.videoHeight = 360;
-    //g_pImmediateContext->UpdateSubresource(g_pCBTextDesc, 0, NULL, &td, 0, 0);
     //
     // Render the cube
     //
@@ -693,7 +624,7 @@ void Render()
     g_pImmediateContext->PSSetShader( g_pPixelShader, NULL, 0 );
 
     g_pDXGIKeyedMutex->AcquireSync(0, INFINITE);
-    g_pImmediateContext->PSSetShaderResources( 0, 1, g_resourceViewPlanes_);//设置1个纹理到显卡
+    g_pImmediateContext->PSSetShaderResources( 0, 1, &g_shaderResourceView);//设置1个纹理到显卡
     g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
     g_pImmediateContext->DrawIndexed( 6, 0, 0 );
 
