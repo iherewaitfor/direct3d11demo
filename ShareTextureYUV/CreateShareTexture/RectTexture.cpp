@@ -275,31 +275,17 @@ bool createTexture() {
     const int Width = textureWidth; //video width
     const int Height = textureHeight; //video height
 
-    unsigned char buf[Width * Height * 3 / 2];
-    unsigned char* plane[3];
+    unsigned char buf[Width * Height * 3 / 2]; //
 
 
     if ((infile = fopen("guilin_640x360_yuv420.yuv", "rb")) == NULL) {
         printf("cannot open this file\n");
         return false;
     }
-    //display the frame 30 
-    //for (int j = 0; j < 30; j++) {
-    //    if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
-    //        // Loop
-    //        fseek(infile, 0, SEEK_SET);
-    //        fread(buf, 1, Width * Height * 3 / 2, infile);
-    //    }
-
-    //}
+    //读取yuv数据到内存。
     if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
-        fseek(infile, 0, SEEK_SET);
-        fread(buf, 1, Width * Height * 3 / 2, infile);
+        return false;
     }
-    //yuvdata
-    plane[0] = buf;  //Y
-    plane[1] = plane[0] + Width * Height; //U
-    plane[2] = plane[1] + Width * Height / 4; //V
 
     ////更新单一纹理数据。
     //D3D11_BOX destRegion;
@@ -313,7 +299,7 @@ bool createTexture() {
     
     //更新单一纹理数据。
     g_pDXGIKeyedMutex->AcquireSync(0, INFINITE);
-    g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, NULL, plane[0], Width, 0);
+    g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, NULL, buf, Width, 0);
     g_pDXGIKeyedMutex->ReleaseSync(0);
 
     return true;
