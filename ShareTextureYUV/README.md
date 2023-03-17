@@ -76,4 +76,39 @@ cmake .. -G "Visual Studio 17 2022" -A Win32
 ```
 
 ## 使用共享纹理
+先从共享内存读出共享纹理句柄。然后使用device的OpenSharedResource方法打开共享纹理。
+
+```C++
+ID3D11Texture2D*                    g_sharedTexture = NULL; //共享纹理
+
+device->OpenSharedResource(sharedHandle, __uuidof(ID3D11Texture2D), (LPVOID*)&g_sharedTexture);
+```
+
+打开共享纹理后，接着创建shader资源。
+
+```C++
+    // 创建shader资源，和纹理关联起来
+    shaderResourceViewDesc.Format = textureDesc.Format;
+    shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+    shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+    result = device->CreateShaderResourceView(g_sharedTexture, &shaderResourceViewDesc, &g_shaderResourceView);
+```
+
+可以通过纹理的GetDesc方法获取纹理的描述信息，从中取到纹理的宽高，传到着色器中。
+```C++
+    D3D11_TEXTURE2D_DESC textureDesc2;
+    g_sharedTexture->GetDesc(&textureDesc2);
+
+    bd.ByteWidth = sizeof(CBTextDesc);
+    CBTextDesc td2;
+    td2.videoWidth = textureDesc2.Width;//640
+    td2.videoHeight = textureDesc2.Height;//320
+    InitData.pSysMem = &td2;
+    hr = g_pd3dDevice->CreateBuffer( &bd, &InitData, &g_pCBTextDesc);
+
+    g_pImmediateContext->PSSetConstantBuffers( 3, 1, &g_pCBTextDesc);
+```
+
 
