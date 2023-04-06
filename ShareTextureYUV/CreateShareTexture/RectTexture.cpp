@@ -80,6 +80,10 @@ ID3D11ShaderResourceView*           g_resourceViewPlanes_[1]; //
 HANDLE				                g_hsharedHandle = NULL;
 IDXGIKeyedMutex*                    g_pDXGIKeyedMutex  = NULL;
 
+const int g_videoWidth = 640;
+const int g_videoHeight = 360;
+#define YUV_FILE_NAME               "guilin_640x360_yuv420.yuv"
+
 //--------------------------------------------------------------------------------------
 // Forward declarations
 //--------------------------------------------------------------------------------------
@@ -201,10 +205,8 @@ HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR sz
 }
 
 bool createTexture() {
-    //const int textureWidth = 320;
-    //const int textureHeight = 180;
-    const int textureWidth = 640;
-    const int textureHeight = 360;
+    const int textureWidth = g_videoWidth;  //640
+    const int textureHeight = g_videoHeight;//360
     D3D11_TEXTURE2D_DESC textureDesc;
     HRESULT result;
     D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
@@ -269,25 +271,30 @@ bool createTexture() {
         (LPVOID*)&g_pDXGIKeyedMutex);
     if (FAILED(result) || (g_pDXGIKeyedMutex == NULL))
         return false;
+    return true;
+}
 
-    //YUV file
-    FILE* infile = NULL;
-    const int Width = textureWidth; //video width
-    const int Height = textureHeight; //video height
+FILE* infile = NULL;
+const int Width = g_videoWidth; //video width
+const int Height = g_videoHeight; //video height
+unsigned char buf[Width * Height * 3 / 2]; //
+void UpdateTexture() {
 
-    unsigned char buf[Width * Height * 3 / 2]; //
-
-
-    if ((infile = fopen("guilin_640x360_yuv420.yuv", "rb")) == NULL) {
-        printf("cannot open this file\n");
-        return false;
+    if (infile == NULL) {
+        if ((infile = fopen(YUV_FILE_NAME, "rb")) == NULL) {
+            printf("cannot open this file\n");
+            return ;
+        }
     }
     //读取yuv数据到内存。
     if (fread(buf, 1, Width * Height * 3 / 2, infile) != Width * Height * 3 / 2) {
-        return false;
+        fseek(infile, 0, SEEK_SET); //重头开始读。
+        fread(buf, 1, Width * Height * 3 / 2, infile);
     }
-
-    ////更新单一纹理数据。
+    //更新单一纹理数据。
+    g_pDXGIKeyedMutex->AcquireSync(0, INFINITE);
+    g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, NULL, buf, Width, 0); //不指定区域，则默认更新整个纹理
+    //指定区域更新
     //D3D11_BOX destRegion;
     //destRegion.left = 0;
     //destRegion.right = Width;
@@ -296,13 +303,7 @@ bool createTexture() {
     //destRegion.front = 0;
     //destRegion.back = 1;
     //g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, &destRegion, plane[0], Width, 0);
-    
-    //更新单一纹理数据。
-    g_pDXGIKeyedMutex->AcquireSync(0, INFINITE);
-    g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, NULL, buf, Width, 0);
     g_pDXGIKeyedMutex->ReleaseSync(0);
-
-    return true;
 }
 
 //--------------------------------------------------------------------------------------
@@ -538,8 +539,8 @@ HRESULT InitDevice()
 
     bd.ByteWidth = sizeof(CBTextDesc);
     CBTextDesc td2;
-    td2.videoWidth = 640;
-    td2.videoHeight = 360;
+    td2.videoWidth = g_videoWidth;
+    td2.videoHeight = g_videoHeight;
     InitData.pSysMem = &td2;
     hr = g_pd3dDevice->CreateBuffer( &bd, &InitData, &g_pCBTextDesc);
     if (FAILED(hr))
@@ -642,6 +643,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 //--------------------------------------------------------------------------------------
 void Render()
 {
+    UpdateTexture(); //每次渲染前更新纹理
     static float t = 0.0f;
     // Rotate cube around the origin
     g_World = XMMatrixRotationY( t );
