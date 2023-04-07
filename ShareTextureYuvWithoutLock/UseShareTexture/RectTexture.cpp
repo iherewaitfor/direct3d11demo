@@ -198,7 +198,7 @@ HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR sz
 }
 
 bool getSharedTextureHandle(HANDLE& sharedHandle) {
-    HANDLE hMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, NULL, L"ShareMemory_SharedHandle_YUV");
+    HANDLE hMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, NULL, L"ShareMemory_SharedHandle_YUV_WithoutLock");
 
     if (hMapping)
     {
