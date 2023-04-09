@@ -260,7 +260,7 @@ bool createTexture() {
         lerror = GetLastError();
     }
     //把共享句柄写到共享内存
-    HANDLE hMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, L"ShareMemory_SharedHandle_YUV_WithoutLock");
+    HANDLE hMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, L"ShareMemory_SharedHandle_RGBA_WithoutLock");
     LPVOID lpBase = MapViewOfFile(hMapping, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0);
     memcpy_s(lpBase, 4096, &g_hsharedHandle, sizeof(HANDLE));
 
