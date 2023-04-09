@@ -158,7 +158,7 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow )
     g_hInst = hInstance;
     RECT rc = { 0, 0, 640, 480 };
     AdjustWindowRect( &rc, WS_OVERLAPPEDWINDOW, FALSE );
-    g_hWnd = CreateWindow( L"TutorialWindowClass", L"Direct3D 11 ShareTextureYUV CreateShareTexture", WS_OVERLAPPEDWINDOW,
+    g_hWnd = CreateWindow( L"TutorialWindowClass", L"Direct3D 11 ShareTextureRGBA CreateShareTexture", WS_OVERLAPPEDWINDOW,
                            CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, NULL, NULL, hInstance,
                            NULL );
     if( !g_hWnd )
@@ -226,7 +226,7 @@ bool createTexture() {
     textureDesc.CPUAccessFlags = 0;
     textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
 
-    result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_texturePlanes_[0]);//YUV单一纹理
+    result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_texturePlanes_[0]);
     if (FAILED(result))
     {
         return false;
@@ -279,7 +279,7 @@ void UpdateTexture() {
             return ;
         }
     }
-    //读取yuv数据到内存。
+    //读取纹理数据数据到内存。
 	size_t rd = fread(buf, 1, Width * Height * 4, infile);
     if (rd != Width * Height * 4) {
         fseek(infile, 0, SEEK_SET); //重头开始读。
