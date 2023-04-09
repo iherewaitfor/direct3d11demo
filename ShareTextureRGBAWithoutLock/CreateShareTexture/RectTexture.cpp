@@ -81,7 +81,7 @@ HANDLE				                g_hsharedHandle = NULL;
 
 const int g_videoWidth = 640;
 const int g_videoHeight = 360;
-#define YUV_FILE_NAME               "guilin_640x360_rgba.rgb"
+#define DATA_FILE_NAME               "guilin_640x360_rgba.rgb"
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -213,11 +213,11 @@ bool createTexture() {
     //创建2d纹理，
     ZeroMemory(&textureDesc, sizeof(textureDesc));
 
-    textureDesc.Width = textureWidth;      //单一纹理的宽度与视频宽度相同
-    textureDesc.Height = textureHeight;//单一纹理的高度（w*h+1/2*w*1/2*h+1/2*w*1/2h)/2=3/2h
+    textureDesc.Width = textureWidth;
+    textureDesc.Height = textureHeight;
     textureDesc.MipLevels = 1;
     textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UINT;
+    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     textureDesc.SampleDesc.Count = 1;
     textureDesc.SampleDesc.Quality = 0;
@@ -274,7 +274,7 @@ unsigned char buf[Width * Height * 4]; //
 void UpdateTexture() {
 
     if (infile == NULL) {
-        if ((infile = fopen(YUV_FILE_NAME, "rb")) == NULL) {
+        if ((infile = fopen(DATA_FILE_NAME, "rb")) == NULL) {
             printf("cannot open this file\n");
             return ;
         }
@@ -285,18 +285,6 @@ void UpdateTexture() {
         fseek(infile, 0, SEEK_SET); //重头开始读。
         fread(buf, 1, Width * Height * 4, infile);
     }
-
-	unsigned char* pData = buf;
-	ZeroMemory(pData, Width * Height * 4);
-	for (int j = 0; j < Height; j++) {
-		for (int i = 0; i < Width; i++) {
-			int offset = j * Width * 4 + i * 4;
-			*(pData + offset) = 255; //R
-			*(pData + offset + 1) = 0; //G
-			*(pData + offset + 2) = 125; //B
-			*(pData + offset + 3) = 255; //A
-		}
-	}
     //更新单一纹理数据。
     g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, NULL, buf, Width*4, 0); //不指定区域，则默认更新整个纹理
     //指定区域更新
