@@ -14,3 +14,6 @@
 /YUVOneTexture/build
 /ShareTextureYUV/CreateShareTexture/build
 /ShareTextureYUV/UseShareTexture/build
+/ShareTextureYuvWithoutLock/CreateShareTexture/build
+/ShareTextureYuvWithoutLock/UseShareTexture/build
+/ShareTextureRGBAWithoutLock/CreateShareTexture/build
