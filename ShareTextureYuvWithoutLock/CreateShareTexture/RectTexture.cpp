@@ -215,9 +215,9 @@ bool createTexture() {
 
     textureDesc.Width = textureWidth;      //单一纹理的宽度与视频宽度相同
     textureDesc.Height = textureHeight*3/2;//单一纹理的高度（w*h+1/2*w*1/2*h+1/2*w*1/2h)/2=3/2h
-    textureDesc.MipLevels = 1;
+    textureDesc.MipLevels = 10;
     textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8_UNORM;
+    textureDesc.Format = DXGI_FORMAT_A8_UNORM;
 
     textureDesc.SampleDesc.Count = 1;
     textureDesc.SampleDesc.Quality = 0;
