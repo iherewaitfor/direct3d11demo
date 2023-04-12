@@ -78,3 +78,40 @@ cmake .. -G "Visual Studio 15 2017"
         return false;
     }
 ```
+
+## 拷贝纹理
+
+在cef中，DX11的情况下使用ID3D11DeviceContext的[CopySubresourceRegion](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-copysubresourceregion)进行纹理拷贝。把共享纹理拷贝到正在渲染的纹理上。
+
+```C++
+void CopySubresourceRegion(
+  [in]           ID3D11Resource  *pDstResource,
+  [in]           UINT            DstSubresource,
+  [in]           UINT            DstX,
+  [in]           UINT            DstY,
+  [in]           UINT            DstZ,
+  [in]           ID3D11Resource  *pSrcResource,
+  [in]           UINT            SrcSubresource,
+  [in, optional] const D3D11_BOX *pSrcBox
+);
+```
+
+### [in, optional] pSrcBox
+
+Type: const D3D11_BOX*
+
+A pointer to a 3D box (see D3D11_BOX) that defines the source subresource that can be copied. If NULL, the entire source subresource is copied. The box must fit within the source resource.
+
+如果传空，则复制整个纹理。
+在实现中的调用 。
+```C++
+        ID3D11DeviceContext *d3dDeviceContext = renderer11->getDeviceContext();
+        
+        d3dDeviceContext->CopySubresourceRegion(
+            dstResource, 0, 0, 0, 0, texture, 0,
+            nullptr);
+```
+
+# 参考
+
+[https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-copysubresourceregion](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-copysubresourceregion)
