@@ -61,9 +61,9 @@ cmake .. -G "Visual Studio 15 2017"
 
     textureDesc.Width = textureWidth;      //单一纹理的宽度与视频宽度相同
     textureDesc.Height = textureHeight*3/2;//单一纹理的高度（w*h+1/2*w*1/2*h+1/2*w*1/2h)/2=3/2h
-    textureDesc.MipLevels = 1;
+    textureDesc.MipLevels = 10;
     textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8_UNORM;
+    textureDesc.Format = DXGI_FORMAT_A8_UNORM;
 
     textureDesc.SampleDesc.Count = 1;
     textureDesc.SampleDesc.Quality = 0;
@@ -77,6 +77,26 @@ cmake .. -G "Visual Studio 15 2017"
     {
         return false;
     }
+```
+### 纹理格式 DXGI_FORMAT_A8_UNORM
+使用了纹理格式DXGI_FORMAT_A8_UNORM。注意使用该格式后，shader中取值里要使用.a
+```
+tx.Sample(samLinear, yTextUV).a
+```
+
+web中创建纹理时，需要使用匹配的纹理格式gl.ALPHA
+```javascript
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.ALPHA,
+          width,
+          height,
+          0,
+          gl.ALPHA,
+          gl.UNSIGNED_BYTE,
+          data
+        );
 ```
 
 ## 拷贝纹理
@@ -95,6 +115,9 @@ void CopySubresourceRegion(
   [in, optional] const D3D11_BOX *pSrcBox
 );
 ```
+### [in] pDstResource
+Type: [ID3D11Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d11/nn-d3d11-id3d11resource)*
+指向目标资源的指针。
 
 ### [in, optional] pSrcBox
 
