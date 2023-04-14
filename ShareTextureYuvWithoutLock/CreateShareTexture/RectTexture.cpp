@@ -12,6 +12,7 @@
 
 #include <d3dx10math.h>
 #include <cstdio>
+#include <string>
 
 //--------------------------------------------------------------------------------------
 // Structures
@@ -254,6 +255,12 @@ bool createTexture() {
     // obtain handle to IDXGIResource object.
     pDXGIResource->GetSharedHandle(&g_hsharedHandle);
     pDXGIResource->Release();
+	TCHAR title[255] = { 0 };
+	GetWindowText(g_hWnd, title, 255);
+	std::wstring strTitleWithHandle = std::to_wstring((unsigned int)g_hsharedHandle);
+	strTitleWithHandle.append(L"  ");
+	strTitleWithHandle.append(title);
+	SetWindowText(g_hWnd, strTitleWithHandle.c_str());
     DWORD lerror = 0;
     if (!g_hsharedHandle)
     {
