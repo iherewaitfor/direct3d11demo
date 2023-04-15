@@ -80,9 +80,12 @@ ID3D11ShaderResourceView*           g_resourceViewPlanes_[1]; //
 //共享
 HANDLE				                g_hsharedHandle = NULL;
 
-const int g_videoWidth = 640;
-const int g_videoHeight = 360;
-#define YUV_FILE_NAME               "guilin_640x360_yuv420.yuv"
+int g_videoWidth = 640;
+int g_videoHeight = 360;
+std::wstring YUV_FILE_NAME = L"guilin_640x360_yuv420.yuv";
+
+FILE* infile = NULL;
+unsigned char *buf = NULL; //
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -92,6 +95,7 @@ HRESULT InitDevice();
 void CleanupDevice();
 LRESULT CALLBACK    WndProc( HWND, UINT, WPARAM, LPARAM );
 void Render();
+void CALLBACK TimeProc(HWND, UINT, UINT_PTR, DWORD);
 
 
 //--------------------------------------------------------------------------------------
@@ -102,6 +106,19 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 {
     UNREFERENCED_PARAMETER( hPrevInstance );
     UNREFERENCED_PARAMETER( lpCmdLine );
+	LPWSTR *szArglist = NULL;
+	int nArgs = 0;
+	
+	szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+	if (nArgs >= 4) {
+		//参数示例
+		//guilin_640x360_yuv420.yuv 640 360
+		//output_1280x720_yuv420.yuv 1280 720
+		YUV_FILE_NAME = szArglist[1];
+		g_videoWidth = _wtoi(szArglist[2]);
+		g_videoHeight = _wtoi(szArglist[3]);
+	}
+	buf = new unsigned char[g_videoWidth * g_videoHeight * 3 / 2];
 
     if( FAILED( InitWindow( hInstance, nCmdShow ) ) )
         return 0;
@@ -114,6 +131,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
     // Main message loop
     MSG msg = {0};
+	SetTimer(g_hWnd, 1, 50, TimeProc);
     while( WM_QUIT != msg.message )
     {
         if( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) )
@@ -123,7 +141,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
         }
         else
         {
-            Render();
+           /* Render();*/
         }
     }
 
@@ -274,14 +292,12 @@ bool createTexture() {
     return true;
 }
 
-FILE* infile = NULL;
-const int Width = g_videoWidth; //video width
-const int Height = g_videoHeight; //video height
-unsigned char buf[Width * Height * 3 / 2]; //
-void UpdateTexture() {
 
+void UpdateTexture() {
+	int Width = g_videoWidth; //video width
+	int Height = g_videoHeight; //video height
     if (infile == NULL) {
-        if ((infile = fopen(YUV_FILE_NAME, "rb")) == NULL) {
+        if ((infile = _wfopen(YUV_FILE_NAME.c_str(), L"rb")) == NULL) {
             printf("cannot open this file\n");
             return ;
         }
@@ -636,6 +652,9 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
     }
 
     return 0;
+}
+void CALLBACK TimeProc(HWND, UINT, UINT_PTR, DWORD) {
+	Render();
 }
 //--------------------------------------------------------------------------------------
 // Render a frame
