@@ -85,6 +85,7 @@ HRESULT InitDevice();
 void CleanupDevice();
 LRESULT CALLBACK    WndProc( HWND, UINT, WPARAM, LPARAM );
 void Render();
+void CALLBACK TimeProc(HWND, UINT, UINT_PTR, DWORD);
 
 
 //--------------------------------------------------------------------------------------
@@ -104,7 +105,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
         CleanupDevice();
         return 0;
     }
-
+	SetTimer(g_hWnd, 1, 50, TimeProc);
     // Main message loop
     MSG msg = {0};
     while( WM_QUIT != msg.message )
@@ -116,7 +117,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
         }
         else
         {
-            Render();
+            //Render();
         }
     }
 
@@ -579,6 +580,9 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
     }
 
     return 0;
+}
+void CALLBACK TimeProc(HWND, UINT, UINT_PTR, DWORD) {
+	Render();
 }
 //--------------------------------------------------------------------------------------
 // Render a frame
