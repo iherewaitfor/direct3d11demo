@@ -95,7 +95,6 @@ HRESULT InitDevice();
 void CleanupDevice();
 LRESULT CALLBACK    WndProc( HWND, UINT, WPARAM, LPARAM );
 void Render();
-void CALLBACK TimeProc(HWND, UINT, UINT_PTR, DWORD);
 
 
 //--------------------------------------------------------------------------------------
@@ -129,21 +128,14 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
         return 0;
     }
 
+	SetTimer(g_hWnd, 1, 50, NULL);
     // Main message loop
     MSG msg = {0};
-	SetTimer(g_hWnd, 1, 50, TimeProc);
-    while( WM_QUIT != msg.message )
-    {
-        if( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) )
-        {
-            TranslateMessage( &msg );
-            DispatchMessage( &msg );
-        }
-        else
-        {
-           /* Render();*/
-        }
-    }
+	while (GetMessage(&msg, NULL, 0, 0) > 0)
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
 
     CleanupDevice();
 
@@ -642,7 +634,11 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
             hdc = BeginPaint( hWnd, &ps );
             EndPaint( hWnd, &ps );
             break;
-
+		case WM_TIMER:
+			if (wParam == 1) {//timerid
+				Render();
+			}
+			break;
         case WM_DESTROY:
             PostQuitMessage( 0 );
             break;
@@ -653,9 +649,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 
     return 0;
 }
-void CALLBACK TimeProc(HWND, UINT, UINT_PTR, DWORD) {
-	Render();
-}
+
 //--------------------------------------------------------------------------------------
 // Render a frame
 //--------------------------------------------------------------------------------------
