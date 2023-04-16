@@ -80,9 +80,12 @@ ID3D11ShaderResourceView*           g_resourceViewPlanes_[1]; //
 //共享
 HANDLE				                g_hsharedHandle = NULL;
 
-const int g_videoWidth = 640;
-const int g_videoHeight = 360;
-#define DATA_FILE_NAME               "guilin_640x360_rgba.rgb"
+int g_videoWidth = 640;
+int g_videoHeight = 360;
+std::wstring DATA_FILE_NAME = L"guilin_640x360_rgba.rgb";
+
+FILE* infile = NULL;
+unsigned char *buf = NULL; //
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -92,6 +95,7 @@ HRESULT InitDevice();
 void CleanupDevice();
 LRESULT CALLBACK    WndProc( HWND, UINT, WPARAM, LPARAM );
 void Render();
+void CALLBACK TimeProc(HWND, UINT, UINT_PTR, DWORD);
 
 
 //--------------------------------------------------------------------------------------
@@ -101,7 +105,19 @@ void Render();
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
 {
     UNREFERENCED_PARAMETER( hPrevInstance );
-    UNREFERENCED_PARAMETER( lpCmdLine );
+	LPWSTR *szArglist = NULL;
+	int nArgs = 0;
+
+	szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+	if (nArgs >= 4) {
+		//参数示例
+		//guilin_640x360_rgba.rgb 640 360
+		//guilinvideo_640x420_rgba.rgb 640 420
+		DATA_FILE_NAME = szArglist[1];
+		g_videoWidth = _wtoi(szArglist[2]);
+		g_videoHeight = _wtoi(szArglist[3]);
+	}
+	buf = new unsigned char[g_videoWidth * g_videoHeight * 4];
 
     if( FAILED( InitWindow( hInstance, nCmdShow ) ) )
         return 0;
@@ -111,7 +127,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
         CleanupDevice();
         return 0;
     }
-
+	SetTimer(g_hWnd, 1, 50, TimeProc);
     // Main message loop
     MSG msg = {0};
     while( WM_QUIT != msg.message )
@@ -123,7 +139,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
         }
         else
         {
-            Render();
+            //Render();
         }
     }
 
@@ -275,14 +291,11 @@ bool createTexture() {
     return true;
 }
 
-FILE* infile = NULL;
-const int Width = g_videoWidth; //video width
-const int Height = g_videoHeight; //video height
-unsigned char buf[Width * Height * 4]; //
 void UpdateTexture() {
-
+	int Width = g_videoWidth; //video width
+	int Height = g_videoHeight; //video height
     if (infile == NULL) {
-        if ((infile = fopen(DATA_FILE_NAME, "rb")) == NULL) {
+        if ((infile = _wfopen(DATA_FILE_NAME.c_str(), L"rb")) == NULL) {
             printf("cannot open this file\n");
             return ;
         }
@@ -639,6 +652,10 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 
     return 0;
 }
+void CALLBACK TimeProc(HWND, UINT, UINT_PTR, DWORD) {
+	Render();
+}
+
 //--------------------------------------------------------------------------------------
 // Render a frame
 //--------------------------------------------------------------------------------------
