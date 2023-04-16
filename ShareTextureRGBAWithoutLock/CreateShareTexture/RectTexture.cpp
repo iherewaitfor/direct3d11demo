@@ -12,6 +12,7 @@
 
 #include <d3dx10math.h>
 #include <cstdio>
+#include <string>
 
 //--------------------------------------------------------------------------------------
 // Structures
@@ -259,6 +260,13 @@ bool createTexture() {
     {
         lerror = GetLastError();
     }
+	TCHAR title[255] = { 0 };
+	GetWindowText(g_hWnd, title, 255);
+	std::wstring strTitleWithHandle = std::to_wstring((unsigned int)g_hsharedHandle);
+	strTitleWithHandle.append(L"  ");
+	strTitleWithHandle.append(title);
+	SetWindowText(g_hWnd, strTitleWithHandle.c_str());
+
     //把共享句柄写到共享内存
     HANDLE hMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, L"ShareMemory_SharedHandle_RGBA_WithoutLock");
     LPVOID lpBase = MapViewOfFile(hMapping, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0);
@@ -673,6 +681,7 @@ void Render()
     g_pImmediateContext->PSSetConstantBuffers( 3, 1, &g_pCBTextDesc);
     g_pImmediateContext->PSSetShader( g_pPixelShader, NULL, 0 );
 
+	//从数据第0个开始，设置1个纹理
     g_pImmediateContext->PSSetShaderResources( 0, 1, g_resourceViewPlanes_);//设置1个纹理到显卡
     g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
     g_pImmediateContext->DrawIndexed( 6, 0, 0 );
