@@ -87,6 +87,11 @@ std::wstring DATA_FILE_NAME = L"guilin_640x360_rgba.rgb";
 FILE* infile = NULL;
 unsigned char *buf = NULL; //
 
+//共享内存
+HANDLE g_hshareMemMapping = NULL;
+LPVOID g_lpShareMemBase = NULL;
+
+
 //--------------------------------------------------------------------------------------
 // Forward declarations
 //--------------------------------------------------------------------------------------
@@ -286,6 +291,29 @@ bool createTexture() {
 void UpdateTexture() {
 	int Width = g_videoWidth; //video width
 	int Height = g_videoHeight; //video height
+	if (g_hshareMemMapping == NULL) {
+
+		//// 创建任务何人都能访问的security_attributes
+		//SECURITY_DESCRIPTOR sd;
+		//DWORD error = 0;
+		//if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
+		//{
+		//	return ;
+		//}
+		//if (!SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE))
+		//{
+		//	return ;
+		//}
+		//SECURITY_ATTRIBUTES attr;
+		//attr.bInheritHandle = FALSE;
+		//attr.lpSecurityDescriptor = &sd;
+		//attr.nLength = sizeof(SECURITY_ATTRIBUTES);
+
+		//g_hshareMemMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, &attr, PAGE_READWRITE, 0, Width*Height * 4, "my123");
+		
+		g_hshareMemMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, Width*Height * 4, "myShareMemRGBA123");
+		g_lpShareMemBase = MapViewOfFile(g_hshareMemMapping, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0);
+	}
     if (infile == NULL) {
         if ((infile = _wfopen(DATA_FILE_NAME.c_str(), L"rb")) == NULL) {
             printf("cannot open this file\n");
@@ -310,6 +338,7 @@ void UpdateTexture() {
     //destRegion.back = 1;
     //g_pImmediateContext->UpdateSubresource(g_texturePlanes_[0], 0, &destRegion, plane[0], Width, 0);
 
+	memcpy_s(g_lpShareMemBase, Width * Height * 4, buf, Width * Height * 4); // 复制到共享内存
 }
 
 //--------------------------------------------------------------------------------------
