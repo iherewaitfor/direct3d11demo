@@ -280,7 +280,7 @@ HRESULT InitDevice()
     descDepth.Height = height;
     descDepth.MipLevels = 1;
     descDepth.ArraySize = 1;
-    descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    descDepth.Format = DXGI_FORMAT_D32_FLOAT;// DXGI_FORMAT_D24_UNORM_S8_UINT;
     descDepth.SampleDesc.Count = 1;
     descDepth.SampleDesc.Quality = 0;
     descDepth.Usage = D3D11_USAGE_DEFAULT;
@@ -366,7 +366,7 @@ HRESULT InitDevice()
     if( FAILED( hr ) )
         return hr;
 
-	InitializeSphereBuffers(g_pd3dDevice, 0.5f, 10, 30);
+	InitializeSphereBuffers(g_pd3dDevice, 1.0f, 10, 30);
 	RenderSphereBuffers(g_pImmediateContext);
 
 
@@ -415,7 +415,7 @@ HRESULT InitDevice()
     g_World = XMMatrixIdentity();
 
     // Initialize the view matrix
-    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, -5.0f, 0.0f );
+    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, -10.0f, 0.0f );
     XMVECTOR At = XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f );
     XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f );
     g_View = XMMatrixLookAtLH( Eye, At, Up );
