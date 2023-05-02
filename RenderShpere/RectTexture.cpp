@@ -313,6 +313,31 @@ HRESULT InitDevice()
     vp.TopLeftY = 0;
     g_pImmediateContext->RSSetViewports( 1, &vp );
 
+    D3D11_RASTERIZER_DESC rasterDesc;
+    // 设置光栅化描述，指定多边形如何被渲染.
+    rasterDesc.AntialiasedLineEnable = false;
+    rasterDesc.CullMode = D3D11_CULL_BACK;
+    rasterDesc.DepthBias = 0;
+    rasterDesc.DepthBiasClamp = 0.0f;
+    rasterDesc.DepthClipEnable = true;
+    rasterDesc.FillMode = D3D11_FILL_SOLID; //D3D11_FILL_SOLID
+    rasterDesc.FrontCounterClockwise = false;
+    rasterDesc.MultisampleEnable = false;
+    rasterDesc.ScissorEnable = false;
+    rasterDesc.SlopeScaledDepthBias = 0.0f;
+
+    ID3D11RasterizerState* rasterState = NULL; //渲染状态
+    // 创建光栅化状态
+    hr = g_pd3dDevice->CreateRasterizerState(&rasterDesc, &rasterState);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    //设置光栅化状态，使其生效
+    g_pImmediateContext->RSSetState(rasterState);
+
+
+
     // Compile the vertex shader
     ID3DBlob* pVSBlob = NULL;
     hr = CompileShaderFromFile( L"RectTexture.fx", "VS", "vs_4_0", &pVSBlob );
