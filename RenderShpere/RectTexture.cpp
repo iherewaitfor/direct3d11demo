@@ -440,7 +440,7 @@ HRESULT InitDevice()
     g_World = XMMatrixIdentity();
 
     // Initialize the view matrix
-    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, -10.0f, 0.0f );
+    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, -5.5f, 0.0f );
     XMVECTOR At = XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f );
     XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f );
     g_View = XMMatrixLookAtLH( Eye, At, Up );
@@ -573,8 +573,7 @@ void Render()
     g_pImmediateContext->PSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
     g_pImmediateContext->PSSetShaderResources( 0, 1, &g_pTextureRV );
     g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
-    //g_pImmediateContext->DrawIndexed( 6, 0, 0 );
-	g_pImmediateContext->DrawIndexed(g_indexCount, 0, 0);
+    g_pImmediateContext->DrawIndexed(g_indexCount, 0, 0);
 
     //
     // Present our back buffer to our front buffer
