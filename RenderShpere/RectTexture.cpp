@@ -316,7 +316,8 @@ HRESULT InitDevice()
     D3D11_RASTERIZER_DESC rasterDesc;
     // 设置光栅化描述，指定多边形如何被渲染.
     rasterDesc.AntialiasedLineEnable = false;
-    rasterDesc.CullMode = D3D11_CULL_BACK;
+    rasterDesc.CullMode = D3D11_CULL_FRONT;
+    //rasterDesc.CullMode = D3D11_CULL_BACK;
     rasterDesc.DepthBias = 0;
     rasterDesc.DepthBiasClamp = 0.0f;
     rasterDesc.DepthClipEnable = true;
@@ -391,7 +392,7 @@ HRESULT InitDevice()
     if( FAILED( hr ) )
         return hr;
 
-	InitializeSphereBuffers(g_pd3dDevice, 1.0f, 10, 30);
+	InitializeSphereBuffers(g_pd3dDevice, 1.0f, 30, 90);
 	RenderSphereBuffers(g_pImmediateContext);
 
 
@@ -440,17 +441,17 @@ HRESULT InitDevice()
     g_World = XMMatrixIdentity();
 
     // Initialize the view matrix
-    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, -5.5f, 0.0f );
-    XMVECTOR At = XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f );
-    XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f );
-    g_View = XMMatrixLookAtLH( Eye, At, Up );
+    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f );//眼睛在原点
+    XMVECTOR At = XMVectorSet( 0.0f, 1.0f, 1.0f, 0.0f );
+    XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f ); //Y轴正向为上方
+    g_View = XMMatrixLookAtLH( Eye, At, Up ); //用的左手系
 
     CBNeverChanges cbNeverChanges;
     cbNeverChanges.mView = XMMatrixTranspose( g_View );
     g_pImmediateContext->UpdateSubresource( g_pCBNeverChanges, 0, NULL, &cbNeverChanges, 0, 0 );
 
     // Initialize the projection matrix
-    g_Projection = XMMatrixPerspectiveFovLH( XM_PIDIV4/2, width / (FLOAT)height, 0.01f, 100.0f );
+    g_Projection = XMMatrixPerspectiveFovLH( XM_PIDIV4/1.1f, width / (FLOAT)height, 0.01f, 100.0f );
     // 创建正交投影矩阵，主要用来实施2D渲染.
     //g_Projection = XMMatrixOrthographicLH(2.0f, 2.0f, 0.1f, 100.0f);
     
