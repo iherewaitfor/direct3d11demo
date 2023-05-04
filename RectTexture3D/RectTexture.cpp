@@ -1,10 +1,3 @@
-//--------------------------------------------------------------------------------------
-// File: Tutorial07.cpp
-//
-// This application demonstrates texturing
-//
-// Copyright (c) Microsoft Corporation. All rights reserved.
-//--------------------------------------------------------------------------------------
 #include <windows.h>
 #include <d3d11.h>
 #include <d3dx11.h>
@@ -378,7 +371,6 @@ HRESULT InitDevice()
     g_pImmediateContext->IASetVertexBuffers( 0, 1, &g_pVertexBuffer, &stride, &offset );
 
     // Create index buffer
-    // Create vertex buffer
     WORD indices[] =
     {
         0, 1, 2,
@@ -407,6 +399,7 @@ HRESULT InitDevice()
 	rasterDesc.AntialiasedLineEnable = false;
 	//rasterDesc.CullMode = D3D11_CULL_FRONT;
 	rasterDesc.CullMode = D3D11_CULL_BACK;
+    //rasterDesc.CullMode = D3D11_CULL_NONE;
 	rasterDesc.DepthBias = 0;
 	rasterDesc.DepthBiasClamp = 0.0f;
 	rasterDesc.DepthClipEnable = true;
