@@ -10,27 +10,56 @@
 
 则计算为
 ```C++
-    // float radius; //半径
-    // int numSlices;  //纵切多个。
-    // int numStacks;  //横切多少个
+// float radius; //半径
+// int numSlices;  //纵切多少份。
+// int numStacks;  //横切多少份
 void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numSlices, int numStacks) {
 
     //生成顶点
-    for(int j = 0; j <= numslices ; j++){
-        float xyStep = j * ( PI / numStacks);
-        float xyR = radius * sinf(xyStep);
-        for(int i =0; i <= numSlices; i++){
-            float xzStep = 2.0f * PI / numbSlices * i ;
+    for (int j = 0; j < numStacks + 1; j++) { 
+        float xyStep = j * (XM_PI / numStacks); // 0-PI
+        float xyR = radius * sinf(xyStep);   
+        float tempY = radius * cosf(xyStep);
+        for (int i = 0; i <= numSlices; i++) {
+            float xzStep = 2.0f * XM_PI / numSlices * i;  // 0 - 2PI
+
+            VertexType v;
             v.position.x = xyR * cosf(xzStep);
-            v.position.y = radius * cosf(xyStep);
+            v.position.y = tempY;
             v.position.z = xyR * sinf(xzStep);
-            
+
             //从球面坐标，映射到纹理坐标
-			v.texture.x = xzStep / (2.0f*PI);
-			v.texture.y = xyStep / PI;
+            v.texture.x = xzStep / (2.0f * XM_PI);
+            v.texture.y = xyStep / XM_PI;
+            if (i == numSlices) {
+                v.texture.x = 1.0f;
+            }
+            if (j == numStacks - 1) {
+                v.texture.y = 1.0f;
+            }
+
+            vertices.push_back(v);
         }
     }
-    // to do ： 使用索引生成组成球面的三角形。
+    // 使用索引生成组成球面的三角形。
+    for (int j = 0; j < numStacks - 1 ; ++j)
+    {
+        int offset = j * (numSlices + 1);
+        for (int i = 0; i < numSlices; ++i)
+        {
+            //由于全景视频时，是由球的里面往外看。所以此处三角形使用 逆时针顺序取顶点
+            //第一个三角形。
+            int index = i + offset;
+            indices.push_back(index);
+            indices.push_back(index + (numSlices + 1));
+            indices.push_back(index + (numSlices + 1) + 1 );
+
+            //第二个三角形
+            indices.push_back(index);
+            indices.push_back(index + (numSlices + 1) + 1);
+            indices.push_back(index + 1);
+        }
+    }
 }
 ```
 

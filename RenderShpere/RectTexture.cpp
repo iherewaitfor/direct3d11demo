@@ -316,8 +316,9 @@ HRESULT InitDevice()
     D3D11_RASTERIZER_DESC rasterDesc;
     // 设置光栅化描述，指定多边形如何被渲染.
     rasterDesc.AntialiasedLineEnable = false;
-    rasterDesc.CullMode = D3D11_CULL_FRONT;
+    //rasterDesc.CullMode = D3D11_CULL_NONE;
     //rasterDesc.CullMode = D3D11_CULL_BACK;
+    rasterDesc.CullMode = D3D11_CULL_FRONT;
     rasterDesc.DepthBias = 0;
     rasterDesc.DepthBiasClamp = 0.0f;
     rasterDesc.DepthClipEnable = true;
@@ -392,7 +393,7 @@ HRESULT InitDevice()
     if( FAILED( hr ) )
         return hr;
 
-	InitializeSphereBuffers(g_pd3dDevice, 1.0f, 30, 90);
+	InitializeSphereBuffers(g_pd3dDevice, 1.0f, 60, 40);
 	RenderSphereBuffers(g_pImmediateContext);
 
 
@@ -441,8 +442,8 @@ HRESULT InitDevice()
     g_World = XMMatrixIdentity();
 
     // Initialize the view matrix
-    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f );//眼睛在原点
-    XMVECTOR At = XMVectorSet( 0.0f, 1.0f, 1.0f, 0.0f );
+    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, -3.0f, 0.0f );//眼睛在原点
+    XMVECTOR At = XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f );
     XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f ); //Y轴正向为上方
     g_View = XMMatrixLookAtLH( Eye, At, Up ); //用的左手系
 
@@ -451,7 +452,7 @@ HRESULT InitDevice()
     g_pImmediateContext->UpdateSubresource( g_pCBNeverChanges, 0, NULL, &cbNeverChanges, 0, 0 );
 
     // Initialize the projection matrix
-    g_Projection = XMMatrixPerspectiveFovLH( XM_PIDIV4/1.1f, width / (FLOAT)height, 0.01f, 100.0f );
+    g_Projection = XMMatrixPerspectiveFovLH( XM_PIDIV4, width / (FLOAT)height, 0.01f, 100.0f );
     // 创建正交投影矩阵，主要用来实施2D渲染.
     //g_Projection = XMMatrixOrthographicLH(2.0f, 2.0f, 0.1f, 100.0f);
     
@@ -538,6 +539,7 @@ void Render()
 
     // Rotate cube around the origin
     g_World = XMMatrixRotationY( t );
+    g_World = g_World * XMMatrixRotationX(XM_PIDIV2);
 
     // Modify the color
     g_vMeshColor.x = ( sinf( t * 1.0f ) + 1.0f ) * 0.5f;
@@ -644,90 +646,56 @@ bool InitializeSphereBuffers(ID3D11Device* device, float radius, int numSlices, 
 	return true;
 
 }
-
+// float radius; //半径
+// int numSlices;  //纵切多少份。
+// int numStacks;  //横切多少份
 void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numSlices, int numStacks) {
-	float phiStep = PI / numStacks;
 
-	int numRings = numStacks - 1;
+    //生成顶点
+    for (int j = 0; j < numStacks + 1; j++) { 
+        float xyStep = j * (XM_PI / numStacks); // 0-PI
+        float xyR = radius * sinf(xyStep);   
+        float tempY = radius * cosf(xyStep);
+        for (int i = 0; i <= numSlices; i++) {
+            float xzStep = 2.0f * XM_PI / numSlices * i;  // 0 - 2PI
 
-	// 对于每个纬度环，计算顶点.
-	for (int i = 1; i <= numRings; ++i)
-	{
-		float phi = i * phiStep;
+            VertexType v;
+            v.position.x = xyR * cosf(xzStep);
+            v.position.y = tempY;
+            v.position.z = xyR * sinf(xzStep);
 
-		// 环上的顶点
-		float thetaStep = 2.0f*PI / numSlices;
-		for (int j = 0; j <= numSlices; ++j)
-		{
-			float theta = j * thetaStep;
+            //从球面坐标，映射到纹理坐标
+            v.texture.x = xzStep / (2.0f * XM_PI);
+            v.texture.y = xyStep / XM_PI;
+            if (i == numSlices) {
+                v.texture.x = 1.0f;
+            }
+            if (j == numStacks - 1) {
+                v.texture.y = 1.0f;
+            }
 
-			VertexType v;
+            vertices.push_back(v);
+        }
+    }
+    // 使用索引生成组成球面的三角形。
+    for (int j = 0; j < numStacks - 1 ; ++j)
+    {
+        int offset = j * (numSlices + 1);
+        for (int i = 0; i < numSlices; ++i)
+        {
+            //由于全景视频时，是由球的里面往外看。所以此处三角形使用 逆时针顺序取顶点
+            //第一个三角形。
+            int index = i + offset;
+            indices.push_back(index);
+            indices.push_back(index + (numSlices + 1));
+            indices.push_back(index + (numSlices + 1) + 1 );
 
-			// 球坐标到笛卡尔坐标的转化
-			v.position.x = radius * sinf(phi)*cosf(theta);
-			v.position.y = radius * cosf(phi);
-			v.position.z = radius * sinf(phi)*sinf(theta);
-
-			D3DXVec3Normalize(&v.normal, &v.position);
-
-			//球的纹理坐标
-			v.texture.x = theta / (2.0f*PI);
-			v.texture.y = phi / PI;
-
-			vertices.push_back(v);
-		}
-	}
-
-	// 球的极点: 会出现纹理坐标扭曲
-	VertexType t1;
-	t1.position = D3DXVECTOR3(0.0f, -radius, 0.0f);
-	t1.normal = D3DXVECTOR3(0.0f, -1.0f, 0.0f);
-	t1.texture = D3DXVECTOR2(0.0f, 1.0f);
-
-	vertices.push_back(t1);
-
-	t1.position = D3DXVECTOR3(0.0f, radius, 0.0f);
-	t1.normal = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
-	t1.texture = D3DXVECTOR2(0.0f, 0.0f);
-
-	vertices.push_back(t1);
-
-	int northPoleIndex = (int)vertices.size() - 1;
-	int southPoleIndex = (int)vertices.size() - 2;
-
-	int numRingVertices = numSlices + 1;
-
-	// 计算索引(不考虑极点)
-	for (int i = 0; i < numSlices - 2; ++i)
-	{
-		for (int j = 0; j < numSlices; ++j)
-		{
-			indices.push_back(i*numRingVertices + j);
-			indices.push_back(i*numRingVertices + j + 1);
-			indices.push_back((i + 1)*numRingVertices + j);
-
-			indices.push_back((i + 1)*numRingVertices + j);
-			indices.push_back(i*numRingVertices + j + 1);
-			indices.push_back((i + 1)*numRingVertices + j + 1);
-		}
-	}
-
-	//北极点索引
-	for (int i = 0; i < numSlices; ++i)
-	{
-		indices.push_back(northPoleIndex);
-		indices.push_back(i + 1);
-		indices.push_back(i);
-	}
-
-	//南极点索引
-	int baseIndex = (numRings - 1)*numRingVertices;
-	for (int i = 0; i < numSlices; ++i)
-	{
-		indices.push_back(southPoleIndex);
-		indices.push_back(baseIndex + i);
-		indices.push_back(baseIndex + i + 1);
-	}
+            //第二个三角形
+            indices.push_back(index);
+            indices.push_back(index + (numSlices + 1) + 1);
+            indices.push_back(index + 1);
+        }
+    }
 }
 
 void RenderSphereBuffers(ID3D11DeviceContext* deviceContext)
