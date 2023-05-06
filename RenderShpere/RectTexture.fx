@@ -26,14 +26,12 @@ cbuffer cbChangesEveryFrame : register( b2 )
 struct VS_INPUT
 {
     float4 Pos : POSITION;
-    float3 normal : NORMAL;
     float2 tex : TEXCOORD0; //纹理坐标
 };
 
 struct PS_INPUT
 {
     float4 Pos : SV_POSITION;
-	float3 worldnormal: NORMAL;
 	float2 tex : TEXCOORD0;
 };
 
@@ -47,9 +45,6 @@ PS_INPUT VS( VS_INPUT input )
     output.Pos = mul( input.Pos, World );
     output.Pos = mul( output.Pos, View );
     output.Pos = mul( output.Pos, Projection );
-
-    float3 N = mul(input.normal, (float3x3)World);
-	output.worldnormal= N;
 	
     output.tex = input.tex;
     
