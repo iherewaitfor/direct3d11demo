@@ -502,7 +502,31 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
                 Render();
             }
             break;
+        case WM_KEYDOWN:
+        {
+            //https://learn.microsoft.com/en-US/windows/win32/inputdev/wm-keydown?redirectedfrom=MSDN
+            //https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 
+            const float rotatYStep = XM_PI/ 16;
+            const float rotatXStep = XM_PI / 16;
+            if (wParam == 'A' || wParam  == VK_LEFT) {
+                g_World = g_World * XMMatrixRotationY(rotatYStep);
+            }
+            else if (wParam == 'D' || wParam == VK_RIGHT) {
+                g_World = g_World * XMMatrixRotationY(-rotatYStep);
+            }
+            else if (wParam == 'W' || wParam == VK_UP) {
+                g_World = g_World * XMMatrixRotationX(rotatYStep);
+            }
+            else if (wParam == 'S' || wParam == VK_DOWN) {
+                g_World = g_World * XMMatrixRotationX(-rotatYStep);
+            }
+            else if (wParam == VK_SPACE) {
+                g_World = XMMatrixIdentity();//»ØÕý
+            }
+
+        }
+        break;
         case WM_DESTROY:
             PostQuitMessage( 0 );
             break;
@@ -525,7 +549,7 @@ void Render()
     t += (float)XM_PI * 0.0125f;
 
     // Rotate cube around the origin Y
-    g_World = XMMatrixRotationY( t );
+    //g_World = XMMatrixRotationY( t );
     //g_World = g_World * XMMatrixRotationX(XM_PIDIV2);
 
     // Modify the color
