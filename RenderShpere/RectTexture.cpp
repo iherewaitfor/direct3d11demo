@@ -108,20 +108,13 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
         CleanupDevice();
         return 0;
     }
-
+    SetTimer(g_hWnd, 1, 30, NULL);
     // Main message loop
     MSG msg = {0};
-    while( WM_QUIT != msg.message )
+    while (GetMessage(&msg, NULL, 0, 0) > 0)
     {
-        if( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) )
-        {
-            TranslateMessage( &msg );
-            DispatchMessage( &msg );
-        }
-        else
-        {
-            Render();
-        }
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
 
     CleanupDevice();
@@ -393,7 +386,7 @@ HRESULT InitDevice()
     if( FAILED( hr ) )
         return hr;
 
-	InitializeSphereBuffers(g_pd3dDevice, 1.0f, 60, 15);
+	InitializeSphereBuffers(g_pd3dDevice, 1.0f, 60, 30);
 	RenderSphereBuffers(g_pImmediateContext);
 
 
@@ -504,6 +497,11 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
             hdc = BeginPaint( hWnd, &ps );
             EndPaint( hWnd, &ps );
             break;
+        case WM_TIMER:
+            if (wParam == 1) {//timerid
+                Render();
+            }
+            break;
 
         case WM_DESTROY:
             PostQuitMessage( 0 );
@@ -524,22 +522,11 @@ void Render()
 {
     // Update our time
     static float t = 0.0f;
-    //if( g_driverType == D3D_DRIVER_TYPE_REFERENCE )
-    //{
-    //    t += ( float )XM_PI * 0.0125f;
-    //}
-    //else
-    //{
-    //    static DWORD dwTimeStart = 0;
-    //    DWORD dwTimeCur = GetTickCount();
-    //    if( dwTimeStart == 0 )
-    //        dwTimeStart = dwTimeCur;
-    //    t = ( dwTimeCur - dwTimeStart ) / 1000.0f;
-    //}
+    t += (float)XM_PI * 0.0125f;
 
-    // Rotate cube around the origin
+    // Rotate cube around the origin Y
     g_World = XMMatrixRotationY( t );
-    g_World = g_World * XMMatrixRotationX(XM_PIDIV2);
+    //g_World = g_World * XMMatrixRotationX(XM_PIDIV2);
 
     // Modify the color
     g_vMeshColor.x = ( sinf( t * 1.0f ) + 1.0f ) * 0.5f;
