@@ -89,20 +89,13 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
         CleanupDevice();
         return 0;
     }
-
+    SetTimer(g_hWnd, 1, 30, NULL);
     // Main message loop
     MSG msg = {0};
-    while( WM_QUIT != msg.message )
+    while (GetMessage(&msg, NULL, 0, 0) > 0)
     {
-        if( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) )
-        {
-            TranslateMessage( &msg );
-            DispatchMessage( &msg );
-        }
-        else
-        {
-            Render();
-        }
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
 
     CleanupDevice();
@@ -523,6 +516,11 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
             hdc = BeginPaint( hWnd, &ps );
             EndPaint( hWnd, &ps );
             break;
+        case WM_TIMER:
+            if (wParam == 1) {//timerid
+                Render();
+            }
+            break;
 
         case WM_DESTROY:
             PostQuitMessage( 0 );
@@ -543,18 +541,7 @@ void Render()
 {
     // Update our time
     static float t = 0.0f;
-    //if( g_driverType == D3D_DRIVER_TYPE_REFERENCE )
-    //{
-    //    t += ( float )XM_PI * 0.0125f;
-    //}
-    //else
-    //{
-    //    static DWORD dwTimeStart = 0;
-    //    DWORD dwTimeCur = GetTickCount();
-    //    if( dwTimeStart == 0 )
-    //        dwTimeStart = dwTimeCur;
-    //    t = ( dwTimeCur - dwTimeStart ) / 1000.0f;
-    //}
+    //t += (float)XM_PI * 0.0125f;
 
     // Rotate cube around the origin
     g_World = XMMatrixRotationY( t );
