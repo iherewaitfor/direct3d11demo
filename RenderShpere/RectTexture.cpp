@@ -393,7 +393,7 @@ HRESULT InitDevice()
     if( FAILED( hr ) )
         return hr;
 
-	InitializeSphereBuffers(g_pd3dDevice, 1.0f, 60, 40);
+	InitializeSphereBuffers(g_pd3dDevice, 1.0f, 60, 15);
 	RenderSphereBuffers(g_pImmediateContext);
 
 
@@ -656,6 +656,12 @@ void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numS
         float xyStep = j * (XM_PI / numStacks); // 0-PI
         float xyR = radius * sinf(xyStep);   
         float tempY = radius * cosf(xyStep);
+        float texY = xyStep / XM_PI;
+        if (j == numStacks) { //由于存在浮点数计算精度差，修复南极点（及每个纬线圈接缝处）的位置和纹理坐标。
+            xyR = 0.0f;
+            tempY = radius;
+            texY = 1.0f;
+        }
         for (int i = 0; i <= numSlices; i++) {
             float xzStep = 2.0f * XM_PI / numSlices * i;  // 0 - 2PI
 
@@ -668,17 +674,15 @@ void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numS
             v.texture.x = xzStep / (2.0f * XM_PI);
             v.texture.y = xyStep / XM_PI;
             if (i == numSlices) {
+                //修复接缝处纹理。
                 v.texture.x = 1.0f;
-            }
-            if (j == numStacks - 1) {
-                v.texture.y = 1.0f;
             }
 
             vertices.push_back(v);
         }
     }
     // 使用索引生成组成球面的三角形。
-    for (int j = 0; j < numStacks - 1 ; ++j)
+    for (int j = 0; j < numStacks ; ++j)
     {
         int offset = j * (numSlices + 1);
         for (int i = 0; i < numSlices; ++i)
