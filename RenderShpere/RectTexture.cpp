@@ -674,12 +674,11 @@ void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numS
 
             //从球面坐标，映射到纹理坐标
             v.texture.x = xzStep / (2.0f * XM_PI);
-            v.texture.y = xyStep / XM_PI;
+            v.texture.y = texY;
             if (i == numSlices) {
                 //修复接缝处纹理。
                 v.texture.x = 1.0f;
             }
-
             vertices.push_back(v);
         }
     }
