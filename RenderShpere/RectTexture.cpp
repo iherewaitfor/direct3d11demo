@@ -661,7 +661,7 @@ void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numS
         float texY = xyStep / XM_PI;
         if (j == numStacks) { //由于存在浮点数计算精度差，修复南极点（及每个纬线圈接缝处）的位置和纹理坐标。
             xyR = 0.0f;
-            tempY = radius;
+            tempY = -radius;
             texY = 1.0f;
         }
         for (int i = 0; i <= numSlices; i++) {
