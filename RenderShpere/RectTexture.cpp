@@ -307,8 +307,8 @@ HRESULT InitDevice()
     // 设置光栅化描述，指定多边形如何被渲染.
     rasterDesc.AntialiasedLineEnable = false;
     //rasterDesc.CullMode = D3D11_CULL_NONE;
-    //rasterDesc.CullMode = D3D11_CULL_BACK;
-    rasterDesc.CullMode = D3D11_CULL_FRONT;
+    rasterDesc.CullMode = D3D11_CULL_BACK;
+    //rasterDesc.CullMode = D3D11_CULL_FRONT;
     rasterDesc.DepthBias = 0;
     rasterDesc.DepthBiasClamp = 0.0f;
     rasterDesc.DepthClipEnable = true;
@@ -435,8 +435,8 @@ HRESULT InitDevice()
     g_pImmediateContext->UpdateSubresource(g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0);
 
     // Initialize the view matrix
-    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, -3.0f, 0.0f );//眼睛在原点
-    XMVECTOR At = XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f );
+    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f );//眼睛在原点
+    XMVECTOR At = XMVectorSet( 0.0f, 0.0f, 2.0f, 0.0f );
     XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f ); //Y轴正向为上方
     g_View = XMMatrixLookAtLH( Eye, At, Up ); //用的左手系
 
@@ -513,19 +513,19 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
             const float rotatXStep = XM_PI / 16;
             const float fovAngleYStep = 1.01f;
             if (wParam == 'A' || wParam  == VK_LEFT) {
-                g_World = g_World * XMMatrixRotationY(-rotatYStep);
-                updateWorld(g_World);
-            }
-            else if (wParam == 'D' || wParam == VK_RIGHT) {
                 g_World = g_World * XMMatrixRotationY(rotatYStep);
                 updateWorld(g_World);
             }
+            else if (wParam == 'D' || wParam == VK_RIGHT) {
+                g_World = g_World * XMMatrixRotationY(-rotatYStep);
+                updateWorld(g_World);
+            }
             else if (wParam == 'W' || wParam == VK_UP) {
-                g_World = g_World * XMMatrixRotationX(-rotatYStep);
+                g_World = g_World * XMMatrixRotationX(rotatYStep);
                 updateWorld(g_World);
             }
             else if (wParam == 'S' || wParam == VK_DOWN) {
-                g_World = g_World * XMMatrixRotationX(rotatYStep);
+                g_World = g_World * XMMatrixRotationX(-rotatYStep);
                 updateWorld(g_World);
             }
             else if (wParam == VK_SPACE) {
@@ -687,11 +687,13 @@ void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numS
             v.position.z = xyR * sinf(xzStep);
 
             //从球面坐标，映射到纹理坐标
-            v.texture.x = xzStep / (2.0f * XM_PI);
+            //1. 从球内（眼睛在原点）向球内表面的视角：1.0f - xzStep / (2.0f * XM_PI); 
+            //2. 若是从球外，看球表面，则为v.texture.x = xzStep / (2.0f * XM_PI); 
+            v.texture.x = 1.0f - xzStep / (2.0f * XM_PI); 
             v.texture.y = texY;
             if (i == numSlices) {
                 //修复接缝处纹理。
-                v.texture.x = 1.0f;
+                v.texture.x = 0.0f;
             }
             vertices.push_back(v);
         }
