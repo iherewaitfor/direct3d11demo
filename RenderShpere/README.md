@@ -81,6 +81,28 @@ void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numS
 横向分析：
 
 看上图，横向把球面切成4份。考虑纹理映射所需，南北极点都有纬线圆，一共有5个纬线圆。每个纬线圆有7个点，一共有7X5=35个顶点。特别的其中同一极点（比如北极）纬线圆上的顶点，位置坐标相同，只是纹理横坐标不同，以便准确进行纹理映射。
+### 位置计算 及纹理映射
+
+位置计算：
+
+从北极点看各个纬线圆与球心的连线，然后与Y轴正轴的夹角xyAngle依次是0、PI/4、2PI/4、3PI/4、PI。计算各纬线圆的半径为xyR = radius \* sinf(xyAngle); 
+
+而顶点位置的y值为position.y = radius \* cos(xyAngle)
+
+纹理坐标值纵坐标为 texture.y =xyAngle/PI
+
+各纬线圆被切成了6分，各个切点（0、1、2、3、4、5、6）与圆心的连线与X轴正轴的夹角zxAngle依次为0、2PI/6、2\*2PI/6、3\*2PI/6、4\*2PI/6、5\*2PI/6、6\*2PI/6。
+
+由此计算
+position.x = xyR \* cos(zxAngle)
+posiong.z = xyR \* sin(zxAngle)
+
+纹理坐标横坐标值为texture.x = 1 - zxAngle/2PI。
+
+
+注意考虑浮点数的计算精度差，南极点的坐标要进行修正，其y值为-1.0
+各纬线圆的终点纹理坐标值也需要修正为0
+
 
 ### 使用顶点构建模型（构建三角形索引）
 
