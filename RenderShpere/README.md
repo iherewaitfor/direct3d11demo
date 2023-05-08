@@ -3,7 +3,7 @@
 
 ## 切分各顶点位置计算
 怎么切分圆。
-从正Y轴，垂直看向XZ平面看，一个圆被切看成sw份，比如切成6份。但共切了7次，其中第1次和每7次位置重叠（方便纹理映射）
+从正Y轴，垂直看向XZ平面看，一个圆被切看成sw份，比如切成6份。总共切了7次，其中第1次和每7次位置重叠（方便纹理映射）
 从负Z轴，垂直看向XZ平面，一个半圆被切成Sj份，比如切成 4份。包括两边的点，共有5个点。
 
 设置球的半径为r，
@@ -95,6 +95,7 @@ void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numS
 
 由此计算
 position.x = xyR \* cos(zxAngle)
+
 posiong.z = xyR \* sin(zxAngle)
 
 纹理坐标横坐标值为texture.x = 1 - zxAngle/2PI。
