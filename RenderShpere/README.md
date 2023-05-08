@@ -23,7 +23,7 @@ void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numS
         float texY = xyStep / XM_PI;
         if (j == numStacks) { //由于存在浮点数计算精度差，修复南极点（及每个纬线圈接缝处）的位置和纹理坐标。
             xyR = 0.0f;
-            tempY = radius;
+            tempY = -radius;
             texY = 1.0f;
         }
         for (int i = 0; i <= numSlices; i++) {
@@ -35,13 +35,14 @@ void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numS
             v.position.z = xyR * sinf(xzStep);
 
             //从球面坐标，映射到纹理坐标
-            v.texture.x = xzStep / (2.0f * XM_PI);
-            v.texture.y = xyStep / XM_PI;
+            //1. 从球内（眼睛在原点）向球内表面的视角：1.0f - xzStep / (2.0f * XM_PI); 
+            //2. 若是从球外，看球表面，则为v.texture.x = xzStep / (2.0f * XM_PI); 
+            v.texture.x = 1.0f - xzStep / (2.0f * XM_PI); 
+            v.texture.y = texY;
             if (i == numSlices) {
                 //修复接缝处纹理。
-                v.texture.x = 1.0f;
+                v.texture.x = 0.0f;
             }
-
             vertices.push_back(v);
         }
     }
@@ -81,7 +82,29 @@ void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numS
 
 看上图，横向把球面切成4份。考虑纹理映射所需，南北极点都有纬线圆，一共有5个纬线圆。每个纬线圆有7个点，一共有7X5=35个顶点。特别的其中同一极点（比如北极）纬线圆上的顶点，位置坐标相同，只是纹理横坐标不同，以便准确进行纹理映射。
 
+### 使用顶点构建模型（构建三角形索引）
 
+![images 球面模型的三角形划分](./images/SphereTriangles.png)
+
+切分了5个纬线圆后，开始构建三角形索引。
+
+我们以北极点开始数第一、二个纬线圈上的顶点构建三角形。
+
+第一个纬线圆上的点分别是0，1，2，3，4，5，6
+
+第二个纬线圆上的点分别是7，8，9，10，11，12，13
+
+以0、7、8，1为例，取两个三角形（逆时针），分别为
+- 0、7、8
+- 0、8、1
+
+上图中的圆是从球外视角（从北极点上空看下来）看的投影。此处逆时针取三角形，这样从球内原点看，刚好是顺时针的（三角形正面）。这样cullmode的值，直接用默认值(D3D11_CULL_BACK)的就可以了。
+
+若此处直接顺利针对三角形
+- 0、8、7
+- 0、1、8
+
+则对应的cullmode值取D3D11_CULL_FRONT，可做到同样效果。或者不改cullmode, 修改FrontCounterClockwise为true。
 
 
 
