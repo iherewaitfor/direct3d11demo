@@ -30,7 +30,6 @@ struct CBChangeOnResize
 struct CBChangesEveryFrame
 {
     XMMATRIX mWorld;
-    XMFLOAT4 vMeshColor;
 };
 
 typedef std::vector<VertexType> VertexList;
@@ -64,7 +63,11 @@ ID3D11SamplerState*                 g_pSamplerLinear = NULL;
 XMMATRIX                            g_World;
 XMMATRIX                            g_View;
 XMMATRIX                            g_Projection;
-XMFLOAT4                            g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
+
+int                                 g_winClientWidth = 0;
+int                                 g_winClientHeight = 0;
+float                               g_FovAngleY = XM_PIDIV4;
+
 
 int g_indexCount = 0;
 
@@ -81,6 +84,8 @@ void Render();
 bool InitializeSphereBuffers(ID3D11Device* device, float radius, int numSlices, int numStacks);
 void MakeSphere(VertexList& vertices, IndexList& indices, float radius, int numSlices, int numStacks);
 void RenderSphereBuffers(ID3D11DeviceContext* deviceContext);
+void updateWorld(const XMMATRIX& worldMatrix);
+void updateProject(const XMMATRIX& projectMatrix);
 
 
 //--------------------------------------------------------------------------------------
@@ -425,6 +430,10 @@ HRESULT InitDevice()
     // Initialize the world matrices
     g_World = XMMatrixIdentity();
 
+    CBChangesEveryFrame cb;
+    cb.mWorld = XMMatrixTranspose(g_World);
+    g_pImmediateContext->UpdateSubresource(g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0);
+
     // Initialize the view matrix
     XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, -3.0f, 0.0f );//眼睛在原点
     XMVECTOR At = XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f );
@@ -437,6 +446,8 @@ HRESULT InitDevice()
 
     // Initialize the projection matrix
     g_Projection = XMMatrixPerspectiveFovLH( XM_PIDIV4, width / (FLOAT)height, 0.01f, 100.0f );
+    g_winClientWidth = width;
+    g_winClientHeight = height;
     // 创建正交投影矩阵，主要用来实施2D渲染.
     //g_Projection = XMMatrixOrthographicLH(2.0f, 2.0f, 0.1f, 100.0f);
     
@@ -500,20 +511,44 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 
             const float rotatYStep = XM_PI/ 16;
             const float rotatXStep = XM_PI / 16;
+            const float fovAngleYStep = 1.01f;
             if (wParam == 'A' || wParam  == VK_LEFT) {
                 g_World = g_World * XMMatrixRotationY(rotatYStep);
+                updateWorld(g_World);
             }
             else if (wParam == 'D' || wParam == VK_RIGHT) {
                 g_World = g_World * XMMatrixRotationY(-rotatYStep);
+                updateWorld(g_World);
             }
             else if (wParam == 'W' || wParam == VK_UP) {
                 g_World = g_World * XMMatrixRotationX(rotatYStep);
+                updateWorld(g_World);
             }
             else if (wParam == 'S' || wParam == VK_DOWN) {
                 g_World = g_World * XMMatrixRotationX(-rotatYStep);
+                updateWorld(g_World);
             }
             else if (wParam == VK_SPACE) {
                 g_World = XMMatrixIdentity();//回正
+                updateWorld(g_World);
+
+                g_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV4, g_winClientWidth / (FLOAT)g_winClientHeight, 0.01f, 100.0f);
+                updateProject(g_Projection);
+            }
+            else if (wParam == VK_OEM_PLUS) {
+                if (g_FovAngleY > XM_PIDIV4/3) {
+                    g_FovAngleY /= fovAngleYStep;
+                }
+                g_Projection = XMMatrixPerspectiveFovLH(g_FovAngleY, g_winClientWidth / (FLOAT)g_winClientHeight, 0.01f, 100.0f);
+                updateProject(g_Projection);
+            }
+            else if (wParam == VK_OEM_MINUS) {
+                if (g_FovAngleY < XM_PIDIV2) {
+                    g_FovAngleY *= fovAngleYStep;
+                }
+                g_Projection = XMMatrixPerspectiveFovLH(g_FovAngleY, g_winClientWidth / (FLOAT)g_winClientHeight, 0.01f, 100.0f);
+                updateProject(g_Projection);
+
             }
 
         }
@@ -535,19 +570,6 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 //--------------------------------------------------------------------------------------
 void Render()
 {
-    // Update our time
-    static float t = 0.0f;
-    t += (float)XM_PI * 0.0125f;
-
-    // Rotate cube around the origin Y
-    //g_World = XMMatrixRotationY( t );
-    //g_World = g_World * XMMatrixRotationX(XM_PIDIV2);
-
-    // Modify the color
-    g_vMeshColor.x = ( sinf( t * 1.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.y = ( cosf( t * 3.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.z = ( sinf( t * 5.0f ) + 1.0f ) * 0.5f;
-
     //
     // Clear the back buffer
     //
@@ -558,14 +580,6 @@ void Render()
     // Clear the depth buffer to 1.0 (max depth)
     //
     g_pImmediateContext->ClearDepthStencilView( g_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 );
-
-    //
-    // Update variables that change once per frame
-    //
-    CBChangesEveryFrame cb;
-    cb.mWorld = XMMatrixTranspose( g_World );
-    cb.vMeshColor = g_vMeshColor;
-    g_pImmediateContext->UpdateSubresource( g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0 );
 
     //
     // Render the cube
@@ -723,4 +737,15 @@ void RenderSphereBuffers(ID3D11DeviceContext* deviceContext)
 	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	return;
+}
+
+void updateWorld(const XMMATRIX& worldMatrix) {
+    CBChangesEveryFrame cb;
+    cb.mWorld = XMMatrixTranspose(worldMatrix);
+    g_pImmediateContext->UpdateSubresource(g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0);
+}
+void updateProject(const XMMATRIX& projectMatrix) {
+    CBChangeOnResize cbChangesOnResize;
+    cbChangesOnResize.mProjection = XMMatrixTranspose(projectMatrix);
+    g_pImmediateContext->UpdateSubresource(g_pCBChangeOnResize, 0, NULL, &cbChangesOnResize, 0, 0);
 }
