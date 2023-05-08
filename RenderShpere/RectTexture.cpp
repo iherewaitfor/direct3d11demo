@@ -513,19 +513,19 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
             const float rotatXStep = XM_PI / 16;
             const float fovAngleYStep = 1.01f;
             if (wParam == 'A' || wParam  == VK_LEFT) {
-                g_World = g_World * XMMatrixRotationY(rotatYStep);
-                updateWorld(g_World);
-            }
-            else if (wParam == 'D' || wParam == VK_RIGHT) {
                 g_World = g_World * XMMatrixRotationY(-rotatYStep);
                 updateWorld(g_World);
             }
+            else if (wParam == 'D' || wParam == VK_RIGHT) {
+                g_World = g_World * XMMatrixRotationY(rotatYStep);
+                updateWorld(g_World);
+            }
             else if (wParam == 'W' || wParam == VK_UP) {
-                g_World = g_World * XMMatrixRotationX(rotatYStep);
+                g_World = g_World * XMMatrixRotationX(-rotatYStep);
                 updateWorld(g_World);
             }
             else if (wParam == 'S' || wParam == VK_DOWN) {
-                g_World = g_World * XMMatrixRotationX(-rotatYStep);
+                g_World = g_World * XMMatrixRotationX(rotatYStep);
                 updateWorld(g_World);
             }
             else if (wParam == VK_SPACE) {
