@@ -22,3 +22,4 @@
 /RectTexture3D/build
 /ShareTextureYUVFFmpeg/CreateShareTexture/build
 /ShareTextureRGBAFFmpeg/CreateShareTexture/build
+/ShareTextureYUVFFmpeg/UseShareTexture/build
