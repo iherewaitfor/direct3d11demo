@@ -90,6 +90,10 @@ std::wstring VIDEO_FILE_NAME = L"guilin_640x360_rgba.rgb";
 FILE* infile = NULL;
 unsigned char *buf = NULL; //
 
+//如果有共享内存，可以从共享内存读
+HANDLE g_hMapping_forRead = NULL;
+LPVOID g_lpBase_forRead = NULL;
+
 //共享内存
 HANDLE g_hshareMemMapping = NULL;
 LPVOID g_lpShareMemBase = NULL;
@@ -148,6 +152,21 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
             }
             g_scalingVideo = new ScalingVideo(g_mp4videoInfo.width, g_mp4videoInfo.height, g_mp4videoInfo.pix_fmt,
                 g_videoWidth, g_videoHeight, AV_PIX_FMT_RGBA);
+        }
+    }
+
+    if (NULL == g_hMapping_forRead)
+    {
+        std::wstring fileMappingName = L"myShareMemRGBA456";
+        if (nArgs >= 4) {
+            std::wstring tempName = szArglist[1];
+            if (tempName.find(L"ShareMem") != std::string::npos) {
+                fileMappingName = tempName;
+            }
+        }
+        g_hMapping_forRead = OpenFileMapping(FILE_MAP_READ, false, fileMappingName.c_str());
+        if (g_hMapping_forRead) {
+            g_lpBase_forRead = MapViewOfFile(g_hMapping_forRead, FILE_MAP_READ, 0, 0, 0);
         }
     }
 
@@ -361,6 +380,11 @@ void UpdateTexture() {
         if (getVideoFrame) {
             g_scalingVideo->scaleVideo(frameData.dst_data, frameData.dst_linesizes, 0, frameData.height);
             memcpy(buf, g_scalingVideo->dst_data[0], g_videoWidth * g_videoHeight*4);
+        }
+    }
+    else if (NULL != g_lpBase_forRead) {
+        if (g_lpBase_forRead) {
+            memcpy_s(buf, Width * Height * 4, g_lpBase_forRead, Width * Height * 4); // 复制到共享内存
         }
     }
     else { //rgba文件
