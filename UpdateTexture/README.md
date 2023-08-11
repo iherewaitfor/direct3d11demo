@@ -18,7 +18,7 @@
   - [像素着色器的输入和输出](#像素着色器的输入和输出)
 - [顶点着色器](#顶点着色器)
   - [编译](#编译)
-  - [创建和设置顶点着色器](#创建和设置顶点着色器)
+  - [创建顶点着色器](#创建顶点着色器)
   - [顶点着色器设置 及其ConstanBuffer值。](#顶点着色器设置-及其constanbuffer值)
 - [像素着色器](#像素着色器)
   - [编译](#编译-1)
@@ -560,7 +560,7 @@ HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR sz
     return S_OK;
 }
 ```
-## 创建和设置顶点着色器
+## 创建顶点着色器
 核心函数：
 - CreateVertexShader
   - 输入：由上面CompileShaderFromFile输出的ID3DBlob。
