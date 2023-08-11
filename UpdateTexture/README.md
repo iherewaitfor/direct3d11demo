@@ -1,4 +1,5 @@
 - [RectTexture](#recttexture)
+- [HOW TO RUN](#how-to-run)
 - [创建窗口](#创建窗口)
 - [初始化设备](#初始化设备)
   - [初始始化设备](#初始始化设备)
@@ -20,6 +21,7 @@
   - [编译](#编译)
   - [创建顶点着色器](#创建顶点着色器)
   - [顶点着色器设置 及其ConstanBuffer值。](#顶点着色器设置-及其constanbuffer值)
+    - [关于矩阵变换](#关于矩阵变换)
 - [像素着色器](#像素着色器)
   - [编译](#编译-1)
   - [创建像素着色器程序](#创建像素着色器程序)
@@ -35,6 +37,7 @@
   - [参数](#参数)
   - [本例中的实际调用](#本例中的实际调用)
 - [执行渲染](#执行渲染)
+- [参考](#参考)
 
 # RectTexture
 本项目主要是使用了正交矩阵，进行2D渲染。将纹理渲染到矩形上。
@@ -42,6 +45,15 @@
 本项目同时展示D3D11的渲染的基础流程。
 
 整个核心概念就是：如何借用 D3D11的接口，申请显卡内存，把系统内存的数据设置到显存中，然后让显卡的逻辑跑起来。
+
+# HOW TO RUN
+安装cmake。在本项目源码目录下新建build，然后运行命令
+```
+cmake .. -A win32
+```
+即可生成.sln文件，打开，选择Demo项目为启动项目，点击运行即可。
+请参考
+[https://github.com/iherewaitfor/direct3d11demo/blob/main/README.md#how-to-run](https://github.com/iherewaitfor/direct3d11demo/blob/main/README.md#how-to-run)
 
 # 创建窗口
 核心函数
@@ -604,6 +616,9 @@ cbuffer cbChangesEveryFrame : register( b2 )
     g_pImmediateContext->VSSetConstantBuffers( 1, 1, &g_pCBChangeOnResize );
     g_pImmediateContext->VSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
 ```
+### 关于矩阵变换
+关于各个矩阵的变换，可以参考[README.md#tutorial04-3d-spaces](https://github.com/iherewaitfor/direct3d11demo/blob/main/README.md#tutorial04-3d-spaces)
+
 # 像素着色器
 
 ## 编译
@@ -957,3 +972,7 @@ void Render()
     g_pSwapChain->Present( 0, 0 );
 }
 ```
+
+# 参考
+
+[https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl)
