@@ -15,12 +15,23 @@
   - [ConstantBuffer值](#constantbuffer值)
   - [顶点着色器的输入和输出](#顶点着色器的输入和输出)
   - [顶点着色器入口函数](#顶点着色器入口函数)
-  - [像素色器的输入和输出](#像素色器的输入和输出)
+  - [像素着色器的输入和输出](#像素着色器的输入和输出)
 - [顶点着色器](#顶点着色器)
   - [编译](#编译)
   - [创建和设置顶点着色器](#创建和设置顶点着色器)
   - [顶点着色器设置 及其ConstanBuffer值。](#顶点着色器设置-及其constanbuffer值)
 - [像素着色器](#像素着色器)
+  - [编译](#编译-1)
+  - [创建像素着色器程序](#创建像素着色器程序)
+  - [设置像素着色器及相关变量](#设置像素着色器及相关变量)
+    - [设置纹理](#设置纹理)
+    - [创建纹理 及资源视图](#创建纹理-及资源视图)
+      - [准备纹理数据](#准备纹理数据)
+      - [创建纹理，并用传入初始化的数据](#创建纹理并用传入初始化的数据)
+      - [创建着色器资源视图（纹理视图）](#创建着色器资源视图纹理视图)
+      - [更新纹理数据](#更新纹理数据)
+      - [设置纹理](#设置纹理-1)
+    - [设置采样器](#设置采样器)
 - [矩阵模型构造](#矩阵模型构造)
 - [正交投影矩阵](#正交投影矩阵)
   - [参数](#参数)
@@ -477,7 +488,7 @@ PS_INPUT VS( VS_INPUT input )
     return output;
 }
 ```
-## 像素色器的输入和输出
+## 像素着色器的输入和输出
 像素着色器的输入为
 ```C++
 struct PS_INPUT
@@ -498,7 +509,14 @@ ID3DBlob* pErrorBlob;
 通过 LPCSTR errmsg = (char*)pErrorBlob->GetBufferPointer();
 可以获取到编译的出错信息。调试时，可以用。
 
-
+其中指定
+- 源文件
+  - 指定为了"RectTexture.fx"
+- 入口函数
+  - 这里指定为"VS"
+- 着器模型
+  - 模型版本，这里指定为4.0
+  
 ```C++
     // Compile the vertex shader
     ID3DBlob* pVSBlob = NULL;
@@ -588,6 +606,251 @@ cbuffer cbChangesEveryFrame : register( b2 )
     g_pImmediateContext->VSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
 ```
 # 像素着色器
+
+## 编译
+和顶点着色号器的编译类型，可以参考上面顶点着色器的编译部分。入口函数为"PS"，着色器模型为"ps_4_0"。
+```C++
+    // Compile the pixel shader
+    ID3DBlob* pPSBlob = NULL;
+    hr = CompileShaderFromFile( L"RectTexture.fx", "PS", "ps_4_0", &pPSBlob );
+    if( FAILED( hr ) )
+    {
+        MessageBox( NULL,
+                    L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK );
+        return hr;
+    }
+```
+## 创建像素着色器程序
+```C++
+    // Create the pixel shader
+    hr = g_pd3dDevice->CreatePixelShader( pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &g_pPixelShader );
+    pPSBlob->Release();
+    if( FAILED( hr ) )
+        return hr;
+```
+## 设置像素着色器及相关变量
+设置像素着色器程序。
+```C++
+    g_pImmediateContext->PSSetShader( g_pPixelShader, NULL, 0 );
+```
+
+设置像素着色器需要的变量
+
+### 设置纹理
+- PSSetShaderResources参数含义
+  - 0： 索引偏移量0
+  - 1： 共一个纹理
+  - &g_pTextureRV： ID3D11ShaderResourceView* 数组
+    - 资源视图指针数组地址
+
+```C++
+    g_pImmediateContext->PSSetShaderResources( 0, 1, &g_pTextureRV );
+```
+### 创建纹理 及资源视图
+
+```C++
+bool createTexture() {
+    const int textureWidth = 512;
+    const int textureHeight = 512;
+    D3D11_TEXTURE2D_DESC textureDesc;
+    HRESULT result;
+    D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+
+
+    char* pData = new char[textureWidth * textureHeight * 4];
+    ZeroMemory(pData, textureWidth * textureHeight * 4);
+    for (int j = 0; j < textureHeight; j++) {
+        for (int i = 0; i < textureWidth; i++) {
+            int offset = j * textureWidth * 4 + i * 4;
+            *(pData + offset) = 255; //R
+            *(pData + offset + 1) = 0; //G
+            *(pData + offset + 2) = 125; //B
+            *(pData + offset + 3) = 255; //A
+        }
+    }
+
+    D3D11_SUBRESOURCE_DATA initData = { 0 };
+    initData.pSysMem = (const void*)pData;
+    initData.SysMemPitch = textureWidth * 4; //一行的字节大小（子资源为2D/3D纹理时使用）
+    //initData.SysMemSlicePitch = textureWidth * textureHeight * 4;
+    initData.SysMemSlicePitch = 0;
+
+    //创建2d纹理，
+    ZeroMemory(&textureDesc, sizeof(textureDesc));
+
+    textureDesc.Width = textureWidth;
+    textureDesc.Height = textureHeight;
+    textureDesc.MipLevels = 1;
+    textureDesc.ArraySize = 1;
+    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    textureDesc.SampleDesc.Count = 1;
+    textureDesc.SampleDesc.Quality = 0;
+    textureDesc.Usage = D3D11_USAGE_DEFAULT;
+    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    textureDesc.CPUAccessFlags = 0;
+    textureDesc.MiscFlags = 0;
+
+    result = g_pd3dDevice->CreateTexture2D(&textureDesc, &initData, &g_programTexture);//传入数据初始化纹理。
+    //result = g_pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_programTexture); //不传入数据初始化，（D3D11_USAGE_DEFAULT）后续可以使用UpdateSubresource更新纹理。
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    // 创建shader资源，和纹理关联起来
+    shaderResourceViewDesc.Format = textureDesc.Format;
+    shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+    shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+    result = g_pd3dDevice->CreateShaderResourceView(g_programTexture, &shaderResourceViewDesc, &g_pTextureRV);
+    if (FAILED(result))
+    {
+        return false;
+    }
+}
+```
+
+#### 准备纹理数据
+为了减少依赖，这里直接自己生成纹理数据。
+
+实际应用中，可能来自视频文件解码出来的视频帧，或者从网络上获取的视频帧。
+```C++
+    const int textureWidth = 512;
+    const int textureHeight = 512;
+    char* pData = new char[textureWidth * textureHeight * 4];
+    ZeroMemory(pData, textureWidth * textureHeight * 4);
+    for (int j = 0; j < textureHeight; j++) {
+        for (int i = 0; i < textureWidth; i++) {
+            int offset = j * textureWidth * 4 + i * 4;
+            *(pData + offset) = 255; //R
+            *(pData + offset + 1) = 0; //G
+            *(pData + offset + 2) = 125; //B
+            *(pData + offset + 3) = 255; //A
+        }
+    }
+```
+
+#### 创建纹理，并用传入初始化的数据
+D3D11的2D纹理描述结构如下。
+```C++
+typedef struct D3D11_TEXTURE2D_DESC
+    {
+    UINT Width;
+    UINT Height;
+    UINT MipLevels;
+    UINT ArraySize;
+    DXGI_FORMAT Format;
+    DXGI_SAMPLE_DESC SampleDesc;
+    D3D11_USAGE Usage;
+    UINT BindFlags;
+    UINT CPUAccessFlags;
+    UINT MiscFlags;
+    } 	D3D11_TEXTURE2D_DESC;
+
+#if !defined( D3D11_NO_HELPERS ) && defined( __cplusplus )
+}
+```
+
+其中部分成员变量含义：
+- Width 宽度
+- Height 调试
+- DXGI_FORMAT纹理格式，如RGAB为DXGI_FORMAT_R8G8B8A8_UNORM
+
+
+初始化数据_子资源数据 的描述结构如下：
+
+```C++
+typedef struct D3D11_SUBRESOURCE_DATA
+    {
+    const void *pSysMem;
+    UINT SysMemPitch;//一行的字节大小（子资源为2D/3D纹理时使用）
+    UINT SysMemSlicePitch;
+    } 	D3D11_SUBRESOURCE_DATA;
+```
+
+创建纹理的过程如下
+- 准备初始化数据
+  - 填充D3D11_SUBRESOURCE_DATA结构
+- 填充纹理描述结构对象D3D11_TEXTURE2D_DESC
+- 调用CreateTexture2D创建纹理
+
+```C++
+    const int textureWidth = 512;
+    const int textureHeight = 512;
+    D3D11_TEXTURE2D_DESC textureDesc;
+    HRESULT result;
+    D3D11_SUBRESOURCE_DATA initData = { 0 };
+    initData.pSysMem = (const void*)pData;
+    initData.SysMemPitch = textureWidth * 4; //一行的字节大小（子资源为2D/3D纹理时使用）
+    initData.SysMemSlicePitch = 0;
+
+    //创建2d纹理，
+    ZeroMemory(&textureDesc, sizeof(textureDesc));
+
+    textureDesc.Width = textureWidth;
+    textureDesc.Height = textureHeight;
+    textureDesc.MipLevels = 1;
+    textureDesc.ArraySize = 1;
+    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    textureDesc.SampleDesc.Count = 1;
+    textureDesc.SampleDesc.Quality = 0;
+    textureDesc.Usage = D3D11_USAGE_DEFAULT;
+    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    textureDesc.CPUAccessFlags = 0;
+    textureDesc.MiscFlags = 0;
+
+    result = g_pd3dDevice->CreateTexture2D(&textureDesc, &initData, &g_programTexture);//传入数据初始化纹理。
+```
+#### 创建着色器资源视图（纹理视图）
+纹理只是一块内存数据，着色器需要访问，需要通过资源视图。
+```C++
+    ID3D11ShaderResourceView*           g_pTextureRV = NULL;
+
+    // 创建shader资源，和纹理关联起来
+    D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+    shaderResourceViewDesc.Format = textureDesc.Format;
+    shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+    shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+    result = g_pd3dDevice->CreateShaderResourceView(g_programTexture, &shaderResourceViewDesc, &g_pTextureRV);
+    if (FAILED(result))
+    {
+        return false;
+    }
+```
+
+创建出来的资源视图ID3D11ShaderResourceView，就可以通过函数PSSetShaderResources设置纹理了。本应用设置了一张纹理。
+#### 更新纹理数据
+除了通过创建纹理时，直接传数据来初始化纹理数据之外，还可以通过UpdateSubresource来更新纹理的数据。
+
+可以通过 D3D11_BOX来控制只更新部分纹理数据。 一般都是更新整张纹理的话，直接传NULL就可以。
+
+```C++
+    //更新纹理数据。
+    D3D11_BOX destRegion;
+    destRegion.left = 0;
+    destRegion.right = textureWidth;
+    destRegion.top = 0;
+    destRegion.bottom = textureHeight;
+    destRegion.front = 0;
+    destRegion.back = 1;
+    g_pImmediateContext->UpdateSubresource(g_programTexture, 0, &destRegion, pData, textureWidth * 4 , 0);
+
+    //D3D11_BOX填NULL，表示整张纹理。
+    //g_pImmediateContext->UpdateSubresource(g_programTexture, 0, NULL, pData, textureWidth * 4 , 0);
+```
+#### 设置纹理
+
+
+### 设置采样器
+```C++
+    g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
+```
+
 
 # 矩阵模型构造
 
