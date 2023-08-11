@@ -9,6 +9,18 @@
   - [构造顶点数据](#构造顶点数据)
   - [把顶点数据设置到显存](#把顶点数据设置到显存)
   - [设置顶点索引 和三角形拓朴信息](#设置顶点索引-和三角形拓朴信息)
+  - [设置RasterizerState](#设置rasterizerstate)
+- [着色器编程概念](#着色器编程概念)
+  - [纹理值](#纹理值)
+  - [ConstantBuffer值](#constantbuffer值)
+  - [顶点着色器的输入和输出](#顶点着色器的输入和输出)
+  - [顶点着色器入口函数](#顶点着色器入口函数)
+  - [像素色器的输入和输出](#像素色器的输入和输出)
+- [顶点着色器](#顶点着色器)
+  - [编译](#编译)
+  - [创建和设置顶点着色器](#创建和设置顶点着色器)
+  - [顶点着色器设置 及其ConstanBuffer值。](#顶点着色器设置-及其constanbuffer值)
+- [像素着色器](#像素着色器)
 - [矩阵模型构造](#矩阵模型构造)
 - [正交投影矩阵](#正交投影矩阵)
   - [参数](#参数)
@@ -333,6 +345,249 @@ typedef struct D3D11_BUFFER_DESC
     // Set primitive topology
     g_pImmediateContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 ```
+
+## 设置RasterizerState
+这里全部使用默认值：
+- CullMode默认值为D3D11_CULL_BACK，（不显示背面）
+- 模型中三角形的顺序（此处三角形用的索引）：此项目使用顺时针
+- FrontCounterClockwise：正面是逆时针方向？ 默认值为false（即顺时针方向 为正面）
+
+以上三个值决定渲染模型的三角形的哪个面还是所有面。
+
+[RectTexture3D/README.md#cullmode默认为d3d11_cull_back](https://github.com/iherewaitfor/direct3d11demo/blob/main/RectTexture3D/README.md#cullmode%E9%BB%98%E8%AE%A4%E4%B8%BAd3d11_cull_back)
+
+# 着色器编程概念
+
+以下为着色器源码：（包含顶点着色器和像素色差器）
+```C++
+//--------------------------------------------------------------------------------------
+// Constant Buffer Variables
+//--------------------------------------------------------------------------------------
+Texture2D txDiffuse : register( t0 );
+SamplerState samLinear : register( s0 );
+cbuffer cbNeverChanges : register( b0 )
+{
+    matrix View;
+};
+cbuffer cbChangeOnResize : register( b1 )
+{
+    matrix Projection;
+};
+cbuffer cbChangesEveryFrame : register( b2 )
+{
+    matrix World;
+};
+//--------------------------------------------------------------------------------------
+struct VS_INPUT
+{
+    float4 Pos : POSITION;
+    float2 Tex : TEXCOORD0;
+};
+struct PS_INPUT
+{
+    float4 Pos : SV_POSITION;
+    float2 Tex : TEXCOORD0;
+};
+//--------------------------------------------------------------------------------------
+// Vertex Shader
+//--------------------------------------------------------------------------------------
+PS_INPUT VS( VS_INPUT input )
+{
+    PS_INPUT output = (PS_INPUT)0;
+    output.Pos = mul( input.Pos, World );
+    output.Pos = mul( output.Pos, View );
+    output.Pos = mul( output.Pos, Projection );
+    output.Tex = input.Tex;
+    
+    return output;
+}
+
+
+//--------------------------------------------------------------------------------------
+// Pixel Shader
+//--------------------------------------------------------------------------------------
+float4 PS( PS_INPUT input) : SV_Target
+{
+    return txDiffuse.Sample( samLinear, input.Tex );
+}
+
+```
+
+- register( t0 )表示取值纹理0
+- register( s0 )表示取值采样器0
+- register( b0 )表示取值ConstantBuffer0
+- register( b1 )表示取值ConstantBuffer1
+- register( b2 )表示取值ConstantBuffer2
+
+可以通过D3D11对应的接口值，分别设置这些值到显卡。
+## 纹理值 
+以下表示第0块纹理。
+```C++
+Texture2D txDiffuse : register( t0 );
+```
+## ConstantBuffer值
+以下ConstantBuffer值，由主应用程序设置进来 
+```C++
+cbuffer cbNeverChanges : register( b0 )
+{
+    matrix View;
+};
+cbuffer cbChangeOnResize : register( b1 )
+{
+    matrix Projection;
+};
+cbuffer cbChangesEveryFrame : register( b2 )
+{
+    matrix World;
+};
+```
+主应用程序设置值进来
+```C++
+    g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pCBNeverChanges );
+    g_pImmediateContext->VSSetConstantBuffers( 1, 1, &g_pCBChangeOnResize );
+    g_pImmediateContext->VSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
+```
+
+## 顶点着色器的输入和输出
+顶点着色器输入，该定义的结构与上面编程的顶点内存布局要一致。只是这里的数据类型使用的是着色器的数据类型。
+这两个成员值分别是 顶点位置和顶点的纹理坐标。
+
+```C++
+struct VS_INPUT
+{
+    float4 Pos : POSITION;
+    float2 Tex : TEXCOORD0;
+};
+```
+## 顶点着色器入口函数
+该函数入参为输入，输出类型为PS_INPUT。
+
+主要逻辑功能：把原始模型的顶点分别进行世界转换、视图转换和投影转换。
+
+其中mul为着色器的内置乘法函数。
+```C++
+PS_INPUT VS( VS_INPUT input )
+{
+    PS_INPUT output = (PS_INPUT)0;
+    output.Pos = mul( input.Pos, World );
+    output.Pos = mul( output.Pos, View );
+    output.Pos = mul( output.Pos, Projection );
+    output.Tex = input.Tex;
+    
+    return output;
+}
+```
+## 像素色器的输入和输出
+像素着色器的输入为
+```C++
+struct PS_INPUT
+{
+    float4 Pos : SV_POSITION;
+    float2 Tex : TEXCOORD0;
+};
+```
+
+# 顶点着色器
+
+## 编译
+核心函数
+- D3DX11CompileFromFile
+
+错误输出：
+ID3DBlob* pErrorBlob;
+通过 LPCSTR errmsg = (char*)pErrorBlob->GetBufferPointer();
+可以获取到编译的出错信息。调试时，可以用。
+
+
+```C++
+    // Compile the vertex shader
+    ID3DBlob* pVSBlob = NULL;
+    hr = CompileShaderFromFile( L"RectTexture.fx", "VS", "vs_4_0", &pVSBlob );
+    if( FAILED( hr ) )
+    {
+        MessageBox( NULL,
+                    L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK );
+        return hr;
+    }
+```
+
+```C++
+//--------------------------------------------------------------------------------------
+// Helper for compiling shaders with D3DX11
+//--------------------------------------------------------------------------------------
+HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut )
+{
+    HRESULT hr = S_OK;
+
+    DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#if defined( DEBUG ) || defined( _DEBUG )
+    // Set the D3DCOMPILE_DEBUG flag to embed debug information in the shaders.
+    // Setting this flag improves the shader debugging experience, but still allows 
+    // the shaders to be optimized and to run exactly the way they will run in 
+    // the release configuration of this program.
+    dwShaderFlags |= D3DCOMPILE_DEBUG;
+#endif
+    ID3DBlob* pErrorBlob;
+    hr = D3DX11CompileFromFile( szFileName, NULL, NULL, szEntryPoint, szShaderModel, 
+        dwShaderFlags, 0, NULL, ppBlobOut, &pErrorBlob, NULL );
+    if( FAILED(hr) )
+    {
+        if( pErrorBlob != NULL )
+            OutputDebugStringA( (char*)pErrorBlob->GetBufferPointer() );
+            LPCSTR errmsg = (char*)pErrorBlob->GetBufferPointer();
+        if( pErrorBlob ) pErrorBlob->Release();
+        return hr;
+    }
+    if( pErrorBlob ) pErrorBlob->Release();
+    return S_OK;
+}
+```
+## 创建和设置顶点着色器
+核心函数：
+- CreateVertexShader
+  - 输入：由上面CompileShaderFromFile输出的ID3DBlob。
+  - 输出：ID3D11VertexShader
+
+```C++
+    ID3D11VertexShader*                 g_pVertexShader = NULL;
+
+    // Create the vertex shader
+    hr = g_pd3dDevice->CreateVertexShader( pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &g_pVertexShader );
+    if( FAILED( hr ) )
+    {    
+        pVSBlob->Release();
+        return hr;
+    }
+```
+
+## 顶点着色器设置 及其ConstanBuffer值。
+
+```C++
+  g_pImmediateContext->VSSetShader( g_pVertexShader, NULL, 0 );
+```
+
+```C++
+cbuffer cbNeverChanges : register( b0 )
+{
+    matrix View;
+};
+cbuffer cbChangeOnResize : register( b1 )
+{
+    matrix Projection;
+};
+cbuffer cbChangesEveryFrame : register( b2 )
+{
+    matrix World;
+};
+```
+分别对应顶点着色器的b0、b1、b2
+
+```C++
+    g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pCBNeverChanges );
+    g_pImmediateContext->VSSetConstantBuffers( 1, 1, &g_pCBChangeOnResize );
+    g_pImmediateContext->VSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
+```
+# 像素着色器
 
 # 矩阵模型构造
 
