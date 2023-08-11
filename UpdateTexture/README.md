@@ -30,12 +30,11 @@
       - [创建纹理，并用传入初始化的数据](#创建纹理并用传入初始化的数据)
       - [创建着色器资源视图（纹理视图）](#创建着色器资源视图纹理视图)
       - [更新纹理数据](#更新纹理数据)
-      - [设置纹理](#设置纹理-1)
     - [设置采样器](#设置采样器)
-- [矩阵模型构造](#矩阵模型构造)
 - [正交投影矩阵](#正交投影矩阵)
   - [参数](#参数)
   - [本例中的实际调用](#本例中的实际调用)
+- [执行渲染](#执行渲染)
 
 # RectTexture
 本项目主要是使用了正交矩阵，进行2D渲染。将纹理渲染到矩形上。
@@ -843,17 +842,34 @@ typedef struct D3D11_SUBRESOURCE_DATA
     //D3D11_BOX填NULL，表示整张纹理。
     //g_pImmediateContext->UpdateSubresource(g_programTexture, 0, NULL, pData, textureWidth * 4 , 0);
 ```
-#### 设置纹理
-
 
 ### 设置采样器
+
+参数
+- 开始的偏移值
+- 个数
+- 采样器数组
 ```C++
     g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
 ```
 
-
-# 矩阵模型构造
-
+创建采样器
+```C++
+    ID3D11SamplerState*                 g_pSamplerLinear = NULL;
+    // Create the sample state
+    D3D11_SAMPLER_DESC sampDesc;
+    ZeroMemory( &sampDesc, sizeof(sampDesc) );
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = g_pd3dDevice->CreateSamplerState( &sampDesc, &g_pSamplerLinear );
+    if( FAILED( hr ) )
+        return hr;
+```
 
 # 正交投影矩阵
 [XMMatrixOrthographicLH](https://learn.microsoft.com/zh-cn/windows/win32/api/directxmath/nf-directxmath-xmmatrixorthographiclh)
@@ -887,4 +903,57 @@ XMMATRIX XM_CALLCONV XMMatrixOrthographicLH(
 ```C++
 // 创建正交投影矩阵，主要用来实施2D渲染.
     g_Projection = XMMatrixOrthographicLH((float)2, (float)2, 0.1f, 100.0f);
+```
+
+# 执行渲染
+核心函数
+-  ID3D11DeviceContext::DrawIndexed
+   -  画一个模型，使用索引描述的模型。
+   -  如果有多个模型，可以调用多次
+-  IDXGISwapChain::Present
+   -  把画好的内存，切到前端呈现。
+```C++
+相关函数
+- ID3D11DeviceContext::ClearRenderTargetView
+  - 在渲染前，如有必要，先擦除目标渲染视图。
+- ID3D11DeviceContext::ClearDepthStencilView
+  - 清空深度模具视图
+
+void Render()
+{
+    //
+    // Clear the back buffer
+    //
+    float ClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f }; // red, green, blue, alpha
+    g_pImmediateContext->ClearRenderTargetView( g_pRenderTargetView, ClearColor );
+
+    //
+    // Clear the depth buffer to 1.0 (max depth)
+    //
+    g_pImmediateContext->ClearDepthStencilView( g_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 );
+
+    //
+    // Update variables that change once per frame
+    //
+    CBChangesEveryFrame cb;
+    cb.mWorld = XMMatrixTranspose( g_World );
+    g_pImmediateContext->UpdateSubresource( g_pCBChangesEveryFrame, 0, NULL, &cb, 0, 0 );
+
+    //
+    // Render the cube
+    //
+    g_pImmediateContext->VSSetShader( g_pVertexShader, NULL, 0 );
+    g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pCBNeverChanges );
+    g_pImmediateContext->VSSetConstantBuffers( 1, 1, &g_pCBChangeOnResize );
+    g_pImmediateContext->VSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
+    g_pImmediateContext->PSSetShader( g_pPixelShader, NULL, 0 );
+    g_pImmediateContext->PSSetShaderResources( 0, 1, &g_pTextureRV );
+    g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
+    g_pImmediateContext->DrawIndexed( 6, 0, 0 );
+
+    //
+    // Present our back buffer to our front buffer
+    //
+    g_pSwapChain->Present( 0, 0 );
+}
 ```
