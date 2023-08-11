@@ -188,11 +188,6 @@ HRESULT CompileShaderFromFile( WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR sz
 bool createTexture() {
     const int textureWidth = 512;
     const int textureHeight = 512;
-    D3D11_TEXTURE2D_DESC textureDesc;
-    HRESULT result;
-    D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-
-
     char* pData = new char[textureWidth * textureHeight * 4];
     ZeroMemory(pData, textureWidth * textureHeight * 4);
     for (int j = 0; j < textureHeight; j++) {
@@ -212,6 +207,8 @@ bool createTexture() {
     initData.SysMemSlicePitch = 0;
 
     //创建2d纹理，
+    D3D11_TEXTURE2D_DESC textureDesc;
+    HRESULT result;
     ZeroMemory(&textureDesc, sizeof(textureDesc));
 
     textureDesc.Width = textureWidth;
@@ -235,6 +232,7 @@ bool createTexture() {
     }
 
     // 创建shader资源，和纹理关联起来
+    D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
     shaderResourceViewDesc.Format = textureDesc.Format;
     shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
