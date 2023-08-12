@@ -789,6 +789,10 @@ YUV纹理渲染，共享纹理，同时支持ffmpeg解码。可以直接带视�
 # ShareTextureRGBAFFmpeg__RGBA纹理渲染--支持ffmpeg解码视频
 
 RGBA纹理渲染，共享纹理，同时支持ffmpeg解码。可以直接带视频路径参数运行。
+
+支持对视频解码后的视频帧进行放大和缩小。
+
+
 [ShareTextureRGBAFFmpeg](https://github.com/iherewaitfor/direct3d11demo/tree/main/ShareTextureRGBAFFmpeg)
 
 # RectTexture3D__在D3D中渲染矩形
