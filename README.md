@@ -44,6 +44,13 @@
   - [创建轨道](#创建轨道)
   - [the Depth Buffer深度缓冲区](#the-depth-buffer深度缓冲区)
 - [UpdateTexture--2D纹理渲染 及纹理更新](#updatetexture--2d纹理渲染-及纹理更新)
+- [YUVTexture使用三张纹理实现YUV渲染](#yuvtexture使用三张纹理实现yuv渲染)
+- [YUVOneTexture 纯单一纹理实现YUV渲染](#yuvonetexture-纯单一纹理实现yuv渲染)
+- [ShareTextureYUV YUV格式的共享纹理](#sharetextureyuv-yuv格式的共享纹理)
+- [ShareTextureYUVFFmpeg yuv纹理渲染--支持ffmpeg解码视频](#sharetextureyuvffmpeg-yuv纹理渲染--支持ffmpeg解码视频)
+- [ShareTextureRGBAFFmpeg\_\_RGBA纹理渲染--支持ffmpeg解码视频](#sharetexturergbaffmpeg__rgba纹理渲染--支持ffmpeg解码视频)
+- [RectTexture3D\_\_在D3D中渲染矩形](#recttexture3d__在d3d中渲染矩形)
+- [RenderShpere 360全景渲染（球面贴纹理）](#rendershpere-360全景渲染球面贴纹理)
 
 
 #   Tutorial 1: Direct3D 11 Basics
@@ -754,3 +761,40 @@ XNA Math中有一些函数可以帮助创建旋转、平移和缩放矩阵。
 本项目同时展示D3D11的渲染的基础流程。
 
 详情请查看[UpdateTexture/README.md](https://github.com/iherewaitfor/direct3d11demo/blob/main/UpdateTexture/README.md)
+
+# YUVTexture使用三张纹理实现YUV渲染
+[https://github.com/iherewaitfor/direct3d11demo/tree/main/YUVTexture](https://github.com/iherewaitfor/direct3d11demo/tree/main/YUVTexture)
+# YUVOneTexture 纯单一纹理实现YUV渲染
+纯单一纹理实现YUV渲染的示例。请查看
+[https://github.com/iherewaitfor/direct3d11demo/tree/main/YUVOneTexture](https://github.com/iherewaitfor/direct3d11demo/tree/main/YUVOneTexture)
+
+# ShareTextureYUV YUV格式的共享纹理
+YUV格式的共享纹理的示例，请查看。
+[ShareTextureYUV](https://github.com/iherewaitfor/direct3d11demo/tree/main/ShareTextureYUV)
+
+# ShareTextureYUVFFmpeg yuv纹理渲染--支持ffmpeg解码视频
+YUV纹理渲染，共享纹理，同时支持ffmpeg解码。可以直接带视频路径参数运行。
+[ShareTextureYUVFFmpeg](https://github.com/iherewaitfor/direct3d11demo/tree/main/ShareTextureYUVFFmpeg)
+
+# ShareTextureRGBAFFmpeg__RGBA纹理渲染--支持ffmpeg解码视频
+
+RGBA纹理渲染，共享纹理，同时支持ffmpeg解码。可以直接带视频路径参数运行。
+[ShareTextureRGBAFFmpeg](https://github.com/iherewaitfor/direct3d11demo/tree/main/ShareTextureRGBAFFmpeg)
+
+# RectTexture3D__在D3D中渲染矩形
+本示例，在D3D中展示一个矩形。并通过
+
+- 调整模型中三角形各顶点的顺序，展示哪个面是正面，哪个面是反面。
+- 调整CullMode，来决定是显示三角形的正面，还是显示三角形的反面。
+通过本例下面的描述，自行调整参数，观察如何控制显示哪些三角形，不显示哪些三角形。
+
+请查看
+[https://github.com/iherewaitfor/direct3d11demo/tree/main/RectTexture3D](https://github.com/iherewaitfor/direct3d11demo/tree/main/RectTexture3D)
+
+# RenderShpere 360全景渲染（球面贴纹理）
+本示例，用于展示如何进行360全景渲染。即把纹理贴到球面上。
+
+可以通过按键AWSD控制球体转，按加减号控制放大缩小，按空格键复位。
+
+详情请查看
+[https://github.com/iherewaitfor/direct3d11demo/tree/main/RenderShpere](https://github.com/iherewaitfor/direct3d11demo/tree/main/RenderShpere)
