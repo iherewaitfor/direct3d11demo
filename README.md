@@ -43,6 +43,7 @@
   - [多个变换](#多个变换)
   - [创建轨道](#创建轨道)
   - [the Depth Buffer深度缓冲区](#the-depth-buffer深度缓冲区)
+- [UpdateTexture--2D纹理渲染 及纹理更新](#updatetexture--2d纹理渲染-及纹理更新)
 
 
 #   Tutorial 1: Direct3D 11 Basics
@@ -745,3 +746,11 @@ XNA Math中有一些函数可以帮助创建旋转、平移和缩放矩阵。
     //
     g_pImmediateContext->ClearDepthStencilView( g_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 );
 ```
+
+
+# UpdateTexture--2D纹理渲染 及纹理更新
+本项目主要是使用了正交矩阵，进行2D渲染。将纹理渲染到矩形上。
+
+本项目同时展示D3D11的渲染的基础流程。
+
+详情请查看[UpdateTexture/README.md](https://github.com/iherewaitfor/direct3d11demo/blob/main/UpdateTexture/README.md)
