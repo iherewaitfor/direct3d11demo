@@ -1,3 +1,10 @@
+- [使用YUV共享纹理不加锁，支持FFmpeg解码](#使用yuv共享纹理不加锁支持ffmpeg解码)
+- [How to run](#how-to-run)
+  - [CreateShareTexture需要使用64位进行](#createsharetexture需要使用64位进行)
+  - [默认如何运行](#默认如何运行)
+  - [解码mp4文件运行](#解码mp4文件运行)
+  - [读取yuv文件运行](#读取yuv文件运行)
+
 # 使用YUV共享纹理不加锁，支持FFmpeg解码
 CreateShareTexture项目创建了YUV共享纹理（不加锁）并渲染到窗口上，创建共享纹理后，把共享句柄写到共享内存中。支持使用FFMpeg直接解码视频文件。UseShareTexture通共享内存读出共享纹理句柄，然后创建ResourceView，把纹理渲染到窗口上。
 
