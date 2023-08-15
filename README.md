@@ -52,7 +52,7 @@
 - [重点项目：ShareTextureYUVFFmpeg yuv纹理渲染--支持ffmpeg解码视频](#重点项目sharetextureyuvffmpeg-yuv纹理渲染--支持ffmpeg解码视频)
 - [ShareTextureRGBAFFmpeg\_\_RGBA纹理渲染--支持ffmpeg解码视频](#sharetexturergbaffmpeg__rgba纹理渲染--支持ffmpeg解码视频)
 - [RectTexture3D\_\_在D3D中渲染矩形](#recttexture3d__在d3d中渲染矩形)
-- [RenderShpere 360全景渲染（球面贴纹理）](#rendershpere-360全景渲染球面贴纹理)
+- [重点项目：RenderShpere 360全景渲染（球面贴纹理）](#重点项目rendershpere-360全景渲染球面贴纹理)
 
 
 #   Tutorial 1: Direct3D 11 Basics
@@ -805,7 +805,7 @@ RGBA纹理渲染，共享纹理，同时支持ffmpeg解码。可以直接带视�
 请查看
 [https://github.com/iherewaitfor/direct3d11demo/tree/main/RectTexture3D](https://github.com/iherewaitfor/direct3d11demo/tree/main/RectTexture3D)
 
-# RenderShpere 360全景渲染（球面贴纹理）
+# 重点项目：RenderShpere 360全景渲染（球面贴纹理）
 本示例，用于展示如何进行360全景渲染。即把纹理贴到球面上。
 
 可以通过按键AWSD控制球体转，按加减号控制放大缩小，按空格键复位。
