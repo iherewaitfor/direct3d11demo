@@ -4,6 +4,7 @@
     - [位置计算 及纹理映射](#位置计算-及纹理映射)
     - [使用顶点构建模型（构建三角形索引）](#使用顶点构建模型构建三角形索引)
   - [纹理映射](#纹理映射)
+- [How To Run](#how-to-run)
 
 
 # 如何切割一个圆。
@@ -152,3 +153,16 @@ posiong.z = xyR \* sin(zxAngle)
 则两者之间的映射关系为
 
 sx对应1-tx，sy对应ty
+
+# How To Run
+
+可以参考[UpdateTexture#how-to-run](https://github.com/iherewaitfor/direct3d11demo/tree/main/UpdateTexture#how-to-run)
+
+运行后，可以通过按键控制视角
+- AWSD 或上下左右键，控制旋转。
+- 加减按钮，控制放大和缩小
+- 空格键  还原最初视角
+
+运行效果如下:
+![渲染360全景视频帧](../images/rendersphere.png)
+
