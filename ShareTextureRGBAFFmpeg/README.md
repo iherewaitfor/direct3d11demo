@@ -15,7 +15,7 @@
 ```
 D:\srccode\direct3d11demo\ShareTextureRGBAFFmpeg\CreateShareTexture\build\Debug>Demo.exe D:\guilinvideo.mp4
 ```
-若带上宽高参考，则会将视频拉伸到对应大小,比如800x600、200x100等
+若带上宽高参数，则会将视频拉伸到对应大小,比如800x600、200x100等
 ```
 D:\srccode\direct3d11demo\ShareTextureRGBAFFmpeg\CreateShareTexture\build\Debug>Demo.exe D:\guilinvideo.mp4 800 600
 ```
