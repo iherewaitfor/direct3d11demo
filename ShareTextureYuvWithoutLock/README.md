@@ -1,3 +1,14 @@
+- [使用共享纹理不加锁](#使用共享纹理不加锁)
+- [How to run](#how-to-run)
+  - [创建共享纹理](#创建共享纹理)
+    - [纹理格式 DXGI\_FORMAT\_A8\_UNORM](#纹理格式-dxgi_format_a8_unorm)
+    - [获取共享纹理句柄](#获取共享纹理句柄)
+    - [打开共享纹理](#打开共享纹理)
+  - [拷贝纹理](#拷贝纹理)
+    - [\[in\] pDstResource](#in-pdstresource)
+    - [\[in, optional\] pSrcBox](#in-optional-psrcbox)
+- [参考](#参考)
+
 # 使用共享纹理不加锁
 CreateShareTexture项目创建了YUV共享纹理（不加锁）并渲染到窗口上，创建共享纹理后，把共享句柄写到共享内存中。UseShareTexture通共享内存读出共享纹理句柄，然后创建ResourceView，把纹理渲染到窗口上。
 
@@ -97,6 +108,74 @@ web中创建纹理时，需要使用匹配的纹理格式gl.ALPHA
           gl.UNSIGNED_BYTE,
           data
         );
+```
+### 获取共享纹理句柄
+
+创建共享分理后，通过共享句柄，进行共享
+
+```C++
+    // QI IDXGIResource interface to synchronized shared surface.
+    IDXGIResource* pDXGIResource = NULL;
+    g_texturePlanes_[0]->QueryInterface(__uuidof(IDXGIResource), (LPVOID*)&pDXGIResource);
+
+    // obtain handle to IDXGIResource object.
+    pDXGIResource->GetSharedHandle(&g_hsharedHandle);
+    pDXGIResource->Release();
+```
+
+### 打开共享纹理
+
+核心函数
+- OpenSharedResource
+  - 传入共享资源句柄
+```C++
+HRESULT OpenSharedResource(
+  [in]            HANDLE hResource,
+  [in]            REFIID ReturnedInterface,
+  [out, optional] void   **ppResource
+);
+```
+实际调用 。
+
+- 通过共享内存（也可以是其他的ipc传递）获取到共享纹理句柄
+- 使用OpenSharedResource，获得共享纹理对象
+- CreateShaderResourceView创建资源视图，以便用于渲染
+
+
+```C++
+bool OpenSharedTexture(ID3D11Device* device)
+{
+    D3D11_TEXTURE2D_DESC textureDesc;
+    HRESULT result;
+    D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+    D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+    HANDLE sharedHandle = 0;
+    // the handle from CreateShareTexture process. start CreateSharedTexture first
+    if (!getSharedTextureHandle(sharedHandle)) {
+        //获取共享句柄失败。
+        return false;
+    }
+    result = device->OpenSharedResource(sharedHandle, __uuidof(ID3D11Texture2D), (LPVOID*)&g_sharedTexture);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    g_sharedTexture->GetDesc(&textureDesc);
+
+    // 创建shader资源，和纹理关联起来
+    shaderResourceViewDesc.Format = textureDesc.Format;
+    shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+    shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+    result = device->CreateShaderResourceView(g_sharedTexture, &shaderResourceViewDesc, &g_shaderResourceView);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    return true;
+}
 ```
 
 ## 拷贝纹理
