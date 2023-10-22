@@ -9,3 +9,25 @@
 ```
 # Use ShareTexture使用共享纹理
 在另外一个进程中读取共享纹理。
+使用OpenSharedResource打开共享纹理。使用CreateShaderResourceView创建视频给显卡用。
+```C++
+	result = device->OpenSharedResource(sharedHandle, __uuidof(ID3D11Texture2D), (LPVOID*)&g_sharedTexture);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    g_sharedTexture->GetDesc(&textureDesc);
+    
+    // 创建shader资源，和纹理关联起来
+    shaderResourceViewDesc.Format = textureDesc.Format;
+    //shaderResourceViewDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+    shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+    result = device->CreateShaderResourceView(g_sharedTexture, &shaderResourceViewDesc, &g_shaderResourceView);
+    if (FAILED(result))
+    {
+        return false;
+    }
+```
